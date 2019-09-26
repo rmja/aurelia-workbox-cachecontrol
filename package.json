@@ -1,0 +1,27 @@
+{
+  "name": "aurelia-workbox-cachecontrol",
+  "version": "0.0.1",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rmja/aurelia-workbox-cachecontrol.git"
+  },
+  "scripts": {
+    "build": "ttsc && ttsc -p tsconfig.cjs.json && rimraf disc/cjs/**/*.d.ts",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "aurelia-framework": "^1.3.1",
+    "dexie": "^2.0.4",
+    "rimraf": "^3.0.0",
+    "ts-nameof": "^3.2.0",
+    "ttypescript": "^1.5.7",
+    "typescript": "^3.6.3"
+  },
+  "peerDependencies": {
+    "aurelia-framework": "^1.3.1",
+    "dexie": "^2.0.4"
+  }
+}
