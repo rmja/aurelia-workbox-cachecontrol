@@ -31,6 +31,9 @@ export class CacheContext extends Dexie {
         }
         finally {
             await this.delete();
+        }
+
+        if (!this.isOpen()) {
             await this.open();
         }
 

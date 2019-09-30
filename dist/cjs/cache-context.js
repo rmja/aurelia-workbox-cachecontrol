@@ -84,7 +84,7 @@ var CacheContext = /** @class */ (function (_super) {
                         }
                         _b.label = 1;
                     case 1:
-                        _b.trys.push([1, , 6, 9]);
+                        _b.trys.push([1, , 6, 8]);
                         _i = 0, _a = this.tables;
                         _b.label = 2;
                     case 2:
@@ -97,15 +97,18 @@ var CacheContext = /** @class */ (function (_super) {
                     case 4:
                         _i++;
                         return [3 /*break*/, 2];
-                    case 5: return [3 /*break*/, 9];
+                    case 5: return [3 /*break*/, 8];
                     case 6: return [4 /*yield*/, this.delete()];
                     case 7:
                         _b.sent();
-                        return [4 /*yield*/, this.open()];
-                    case 8:
-                        _b.sent();
                         return [7 /*endfinally*/];
+                    case 8:
+                        if (!!this.isOpen()) return [3 /*break*/, 10];
+                        return [4 /*yield*/, this.open()];
                     case 9:
+                        _b.sent();
+                        _b.label = 10;
+                    case 10:
                         this.isValidated = true;
                         return [2 /*return*/];
                 }
