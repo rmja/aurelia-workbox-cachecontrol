@@ -31,6 +31,7 @@ export class CacheContext extends Dexie {
         }
         finally {
             await this.delete();
+            await this.open();
         }
 
         this.isValidated = true;
