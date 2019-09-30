@@ -3,6 +3,7 @@ import Dexie from "dexie";
 export declare class CacheContext extends Dexie {
     affiliations: Dexie.Table<AffiliationEntry, string>;
     tags: Dexie.Table<TagEntry, string>;
+    expirations: Dexie.Table<ExpirationEntry, string>;
     constructor(options: CacheOptions);
 }
 export interface AffiliationEntry {
@@ -11,5 +12,13 @@ export interface AffiliationEntry {
 }
 export interface TagEntry {
     key: string;
+    url: string;
     tag: string;
+}
+export interface ExpirationEntry {
+    url: string;
+    created: Date;
+    nextExpiration: Date;
+    absoluteExpiration?: Date;
+    slidingExpiration?: string;
 }

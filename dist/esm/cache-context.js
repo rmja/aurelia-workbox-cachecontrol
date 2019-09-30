@@ -29,7 +29,8 @@ var CacheContext = /** @class */ (function (_super) {
         var _this = _super.call(this, options.controlCacheName) || this;
         _this.version(1).stores({
             affiliations: "url, principalId",
-            tags: "key, tag"
+            tags: "key, url, tag",
+            expirations: "url, nextExpiration"
         });
         return _this;
     }

@@ -1,9 +1,10 @@
 import { CacheContext } from "./cache-context";
+import { DateTime, Duration } from "luxon";
 import { CacheOptions } from './cache-options';
 import { Logger } from "aurelia-logging";
 export interface ICacheControlBuilder {
     bePrivate(): ICacheControlBuilder;
-    withTags(...tags: string[]): ICacheControlBuilder;
+    haveTags(...tags: string[]): ICacheControlBuilder;
     commit(): Promise<void>;
 }
 export declare class CacheControl {
@@ -12,13 +13,19 @@ export declare class CacheControl {
     private runtimeCache?;
     private logger;
     currentPrincipalId?: string;
+    private deleteExpiredTimerHandle;
+    private nextExpiration;
     constructor(db: CacheContext, options: CacheOptions);
-    ensurePrincipal(principalId: string): Promise<void>;
-    clearPrivate(): Promise<void>;
-    bust(tags: string[]): Promise<void>;
     let(urlOrObjectWithUrl: string | {
         url: string;
     }): CacheControlBuilder;
+    ensurePrincipal(principalId: string): Promise<void>;
+    clearPrivate(): Promise<void>;
+    bust(tags: string[]): Promise<void>;
+    refresh(url: string): Promise<void>;
+    private deleteExpiredTick;
+    private deleteExpired;
+    private trySetExpiration;
     private delete;
 }
 declare class CacheControlBuilder implements ICacheControlBuilder {
@@ -26,11 +33,17 @@ declare class CacheControlBuilder implements ICacheControlBuilder {
     private db;
     private logger;
     private currentPrincipalId;
+    private trySetExpiration;
     private private;
     private tags;
-    constructor(url: string, db: CacheContext, logger: Logger, currentPrincipalId: string | undefined);
+    private absoluteExpiration?;
+    private absoluteExpirationRelativeToNow?;
+    private slidingExpiration?;
+    constructor(url: string, db: CacheContext, logger: Logger, currentPrincipalId: string | undefined, trySetExpiration: (expiration: DateTime) => void);
     bePrivate(): this;
-    withTags(...tags: string[]): this;
+    haveTags(...tags: string[]): this;
+    haveAbsoluteExpiration(expires: DateTime | Duration): this;
+    haveSlidingExpiration(expires: Duration): void;
     commit(): Promise<void>;
 }
 export {};

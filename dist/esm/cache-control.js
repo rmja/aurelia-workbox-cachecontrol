@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -44,15 +55,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import { CacheContext } from "./cache-context";
+import { DateTime, Duration } from "luxon";
 import { LogManager, autoinject } from "aurelia-framework";
 import { CacheOptions } from './cache-options';
 var CacheControl = /** @class */ (function () {
     function CacheControl(db, options) {
         this.db = db;
+        this.nextExpiration = NoExpiration;
         this.runtimeCacheName = options.runtimeCacheName;
         this.logger = LogManager.getLogger("cache-control");
         options.ensureValid();
+        this.deleteExpiredTimerHandle = setTimeout(this.deleteExpiredTick.bind(this), 0);
     }
+    CacheControl.prototype.let = function (urlOrObjectWithUrl) {
+        var url = typeof urlOrObjectWithUrl === "string" ? urlOrObjectWithUrl : urlOrObjectWithUrl.url;
+        return new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId, this.trySetExpiration.bind(this));
+    };
     CacheControl.prototype.ensurePrincipal = function (principalId) {
         return __awaiter(this, void 0, void 0, function () {
             var urls;
@@ -125,43 +143,123 @@ var CacheControl = /** @class */ (function () {
     };
     CacheControl.prototype.bust = function (tags) {
         return __awaiter(this, void 0, void 0, function () {
-            var urls;
+            var tagEntries, urls;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.db.tags.where("tag").anyOf(tags).toArray()];
+                    case 1:
+                        tagEntries = _a.sent();
+                        urls = tagEntries.map(function (x) { return x.url; });
+                        return [4 /*yield*/, this.delete(urls)];
+                    case 2:
+                        _a.sent();
+                        this.logger.debug("Busted " + urls.length + " urls", urls);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    CacheControl.prototype.refresh = function (url) {
+        return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.db.transaction("rw", this.db.tags, function () { return __awaiter(_this, void 0, void 0, function () {
-                            var entries;
+                    case 0: return [4 /*yield*/, this.db.transaction("rw", this.db.expirations, function () { return __awaiter(_this, void 0, void 0, function () {
+                            var expiration;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
-                                    case 0: return [4 /*yield*/, this.db.tags.where("tag").anyOf(tags).toArray()];
+                                    case 0: return [4 /*yield*/, this.db.expirations.get(url)];
                                     case 1:
-                                        entries = _a.sent();
-                                        return [4 /*yield*/, this.db.tags.bulkDelete(entries.map(function (x) { return x.key; }))];
+                                        expiration = _a.sent();
+                                        if (!(expiration && expiration.slidingExpiration)) return [3 /*break*/, 3];
+                                        expiration.nextExpiration = DateTime.local().plus(Duration.fromISO(expiration.slidingExpiration)).toJSDate();
+                                        return [4 /*yield*/, this.db.expirations.update(url, expiration)];
                                     case 2:
                                         _a.sent();
-                                        urls = entries.map(function (x) { return splitKey(x.key).url; });
-                                        return [2 /*return*/];
+                                        _a.label = 3;
+                                    case 3: return [2 /*return*/];
                                 }
                             });
                         }); })];
                     case 1:
-                        _a.sent();
-                        this.logger.debug("Busting urls", urls);
-                        return [4 /*yield*/, this.delete(urls)];
-                    case 2:
                         _a.sent();
                         return [2 /*return*/];
                 }
             });
         });
     };
-    CacheControl.prototype.let = function (urlOrObjectWithUrl) {
-        var url = typeof urlOrObjectWithUrl === "string" ? urlOrObjectWithUrl : urlOrObjectWithUrl.url;
-        return new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId);
+    CacheControl.prototype.deleteExpiredTick = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var nextExpirationEntry;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.deleteExpired()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.db.expirations.orderBy("nextExpiration").first()];
+                    case 2:
+                        nextExpirationEntry = _a.sent();
+                        if (nextExpirationEntry) {
+                            this.trySetExpiration(DateTime.fromJSDate(nextExpirationEntry.nextExpiration));
+                        }
+                        else {
+                            this.nextExpiration = NoExpiration;
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    CacheControl.prototype.deleteExpired = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var now, expiredUrls;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        now = new Date();
+                        return [4 /*yield*/, this.db.transaction("rw", this.db.expirations, function () { return __awaiter(_this, void 0, void 0, function () {
+                                var expirations;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0: return [4 /*yield*/, this.db.expirations.where("nextExpiration").belowOrEqual(now).toArray()];
+                                        case 1:
+                                            expirations = _a.sent();
+                                            expiredUrls = expirations.map(function (x) { return x.url; });
+                                            return [4 /*yield*/, this.db.expirations.bulkDelete(expiredUrls)];
+                                        case 2:
+                                            _a.sent();
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            }); })];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.delete(expiredUrls)];
+                    case 2:
+                        _a.sent();
+                        this.logger.info("Expired " + expiredUrls.length + " urls");
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    CacheControl.prototype.trySetExpiration = function (expiration) {
+        if (!this.nextExpiration.isValid || expiration < this.nextExpiration) {
+            if (this.deleteExpiredTimerHandle) {
+                clearTimeout();
+            }
+            this.nextExpiration = expiration;
+            var ttl = this.nextExpiration.diffNow();
+            var ttlMs = Math.max(ttl.get("milliseconds"), 0) + 1; // Ensure fired after expiration
+            this.deleteExpiredTimerHandle = setTimeout(this.deleteExpiredTick.bind(this), ttlMs);
+            this.logger.info("Next expiration timer will be fired at " + this.nextExpiration.toString(), this.nextExpiration);
+        }
     };
     CacheControl.prototype.delete = function (urls) {
         return __awaiter(this, void 0, void 0, function () {
             var _a, set, keys, _i, keys_1, key;
+            var _this = this;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -189,7 +287,26 @@ var CacheControl = /** @class */ (function () {
                     case 6:
                         _i++;
                         return [3 /*break*/, 4];
-                    case 7: return [2 /*return*/];
+                    case 7: 
+                    // Delete tags
+                    return [4 /*yield*/, this.db.transaction("rw", this.db.tags, function () { return __awaiter(_this, void 0, void 0, function () {
+                            var entries;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, this.db.tags.where("url").anyOf(urls).toArray()];
+                                    case 1:
+                                        entries = _a.sent();
+                                        return [4 /*yield*/, this.db.tags.bulkDelete(entries.map(function (x) { return x.key; }))];
+                                    case 2:
+                                        _a.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); })];
+                    case 8:
+                        // Delete tags
+                        _b.sent();
+                        return [2 /*return*/];
                 }
             });
         });
@@ -202,11 +319,12 @@ var CacheControl = /** @class */ (function () {
 }());
 export { CacheControl };
 var CacheControlBuilder = /** @class */ (function () {
-    function CacheControlBuilder(url, db, logger, currentPrincipalId) {
+    function CacheControlBuilder(url, db, logger, currentPrincipalId, trySetExpiration) {
         this.url = url;
         this.db = db;
         this.logger = logger;
         this.currentPrincipalId = currentPrincipalId;
+        this.trySetExpiration = trySetExpiration;
         this.private = false;
         this.tags = [];
     }
@@ -214,7 +332,7 @@ var CacheControlBuilder = /** @class */ (function () {
         this.private = true;
         return this;
     };
-    CacheControlBuilder.prototype.withTags = function () {
+    CacheControlBuilder.prototype.haveTags = function () {
         var _a;
         var tags = [];
         for (var _i = 0; _i < arguments.length; _i++) {
@@ -223,9 +341,21 @@ var CacheControlBuilder = /** @class */ (function () {
         (_a = this.tags).push.apply(_a, tags);
         return this;
     };
+    CacheControlBuilder.prototype.haveAbsoluteExpiration = function (expires) {
+        if (DateTime.isDateTime(expires)) {
+            this.absoluteExpiration = expires;
+        }
+        else {
+            this.absoluteExpirationRelativeToNow = expires;
+        }
+        return this;
+    };
+    CacheControlBuilder.prototype.haveSlidingExpiration = function (expires) {
+        this.slidingExpiration = expires;
+    };
     CacheControlBuilder.prototype.commit = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var promises, entries;
+            var promises, entries, nextExpiration;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -240,13 +370,30 @@ var CacheControlBuilder = /** @class */ (function () {
                         entries = this.tags.map(function (tag) {
                             return {
                                 key: createKey(_this.url, tag),
-                                tag: tag
+                                url: _this.url,
+                                tag: tag,
                             };
                         });
                         promises.push(this.db.tags.bulkPut(entries));
+                        nextExpiration = NoExpiration;
+                        if (this.absoluteExpiration) {
+                            nextExpiration = this.absoluteExpiration;
+                        }
+                        else if (this.absoluteExpirationRelativeToNow) {
+                            nextExpiration = DateTime.local().plus(this.absoluteExpirationRelativeToNow);
+                        }
+                        else if (this.slidingExpiration) {
+                            nextExpiration = DateTime.local().plus(this.slidingExpiration);
+                        }
+                        if (nextExpiration.isValid) {
+                            promises.push(this.db.expirations.put(__assign(__assign({ url: this.url, created: new Date(), nextExpiration: nextExpiration.toJSDate() }, this.absoluteExpiration && { absoluteExpiration: this.absoluteExpiration.toJSDate() }), this.slidingExpiration && { slidingExpiration: this.slidingExpiration.toISO() })));
+                        }
                         return [4 /*yield*/, Promise.all(promises)];
                     case 1:
                         _a.sent();
+                        if (nextExpiration.isValid) {
+                            this.trySetExpiration(nextExpiration);
+                        }
                         if (this.tags.length) {
                             this.logger.debug("Tagged " + this.url + " with", this.tags);
                         }
@@ -257,15 +404,9 @@ var CacheControlBuilder = /** @class */ (function () {
     };
     return CacheControlBuilder;
 }());
+var NoExpiration = DateTime.invalid("No expiration");
 var GS = String.fromCharCode(0x1D);
 function createKey(url, tag) {
     return url + GS + tag;
-}
-function splitKey(key) {
-    var index = key.indexOf(GS);
-    return {
-        url: key.slice(0, index),
-        tag: key.slice(index + 1)
-    };
 }
 //# sourceMappingURL=cache-control.js.map
