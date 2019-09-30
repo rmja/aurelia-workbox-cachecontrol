@@ -79,7 +79,9 @@ var CacheControl = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
+                    case 0: return [4 /*yield*/, this.db.ensureValid()];
+                    case 1:
+                        _a.sent();
                         if (!principalId) {
                             throw new Error("No principal id is specified, use clearPrivate() if all private entries should be deleted");
                         }
@@ -99,10 +101,10 @@ var CacheControl = /** @class */ (function () {
                                     }
                                 });
                             }); })];
-                    case 1:
+                    case 2:
                         _a.sent();
                         return [4 /*yield*/, this.delete(urls)];
-                    case 2:
+                    case 3:
                         _a.sent();
                         if (urls.length) {
                             this.logger.debug("Removed " + urls.length + " private entries");
@@ -118,25 +120,28 @@ var CacheControl = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.db.transaction("rw", this.db.affiliations, function () { return __awaiter(_this, void 0, void 0, function () {
-                            var entries;
-                            return __generator(this, function (_a) {
-                                switch (_a.label) {
-                                    case 0: return [4 /*yield*/, this.db.affiliations.toArray()];
-                                    case 1:
-                                        entries = _a.sent();
-                                        return [4 /*yield*/, this.db.affiliations.bulkDelete(entries.map(function (x) { return x.url; }))];
-                                    case 2:
-                                        _a.sent();
-                                        urls = entries.map(function (x) { return x.url; });
-                                        return [2 /*return*/];
-                                }
-                            });
-                        }); })];
+                    case 0: return [4 /*yield*/, this.db.ensureValid()];
                     case 1:
                         _a.sent();
-                        return [4 /*yield*/, this.delete(urls)];
+                        return [4 /*yield*/, this.db.transaction("rw", this.db.affiliations, function () { return __awaiter(_this, void 0, void 0, function () {
+                                var entries;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0: return [4 /*yield*/, this.db.affiliations.toArray()];
+                                        case 1:
+                                            entries = _a.sent();
+                                            return [4 /*yield*/, this.db.affiliations.bulkDelete(entries.map(function (x) { return x.url; }))];
+                                        case 2:
+                                            _a.sent();
+                                            urls = entries.map(function (x) { return x.url; });
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            }); })];
                     case 2:
+                        _a.sent();
+                        return [4 /*yield*/, this.delete(urls)];
+                    case 3:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -148,12 +153,15 @@ var CacheControl = /** @class */ (function () {
             var tagEntries, urls;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.db.tags.where("tag").anyOf(tags).toArray()];
+                    case 0: return [4 /*yield*/, this.db.ensureValid()];
                     case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.db.tags.where("tag").anyOf(tags).toArray()];
+                    case 2:
                         tagEntries = _a.sent();
                         urls = tagEntries.map(function (x) { return x.url; });
                         return [4 /*yield*/, this.delete(urls)];
-                    case 2:
+                    case 3:
                         _a.sent();
                         this.logger.debug("Busted " + urls.length + " urls", urls);
                         return [2 /*return*/];
@@ -166,24 +174,27 @@ var CacheControl = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.db.transaction("rw", this.db.expirations, function () { return __awaiter(_this, void 0, void 0, function () {
-                            var expiration;
-                            return __generator(this, function (_a) {
-                                switch (_a.label) {
-                                    case 0: return [4 /*yield*/, this.db.expirations.get(url)];
-                                    case 1:
-                                        expiration = _a.sent();
-                                        if (!(expiration && expiration.slidingExpiration)) return [3 /*break*/, 3];
-                                        expiration.nextExpiration = luxon_1.DateTime.local().plus(luxon_1.Duration.fromISO(expiration.slidingExpiration)).toJSDate();
-                                        return [4 /*yield*/, this.db.expirations.update(url, expiration)];
-                                    case 2:
-                                        _a.sent();
-                                        _a.label = 3;
-                                    case 3: return [2 /*return*/];
-                                }
-                            });
-                        }); })];
+                    case 0: return [4 /*yield*/, this.db.ensureValid()];
                     case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.db.transaction("rw", this.db.expirations, function () { return __awaiter(_this, void 0, void 0, function () {
+                                var expiration;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0: return [4 /*yield*/, this.db.expirations.get(url)];
+                                        case 1:
+                                            expiration = _a.sent();
+                                            if (!(expiration && expiration.slidingExpiration)) return [3 /*break*/, 3];
+                                            expiration.nextExpiration = luxon_1.DateTime.local().plus(luxon_1.Duration.fromISO(expiration.slidingExpiration)).toJSDate();
+                                            return [4 /*yield*/, this.db.expirations.update(url, expiration)];
+                                        case 2:
+                                            _a.sent();
+                                            _a.label = 3;
+                                        case 3: return [2 /*return*/];
+                                    }
+                                });
+                            }); })];
+                    case 2:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -195,11 +206,14 @@ var CacheControl = /** @class */ (function () {
             var nextExpirationEntry;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.deleteExpired()];
+                    case 0: return [4 /*yield*/, this.db.ensureValid()];
                     case 1:
                         _a.sent();
-                        return [4 /*yield*/, this.db.expirations.orderBy("nextExpiration").first()];
+                        return [4 /*yield*/, this.deleteExpired()];
                     case 2:
+                        _a.sent();
+                        return [4 /*yield*/, this.db.expirations.orderBy("nextExpiration").first()];
+                    case 3:
                         nextExpirationEntry = _a.sent();
                         if (nextExpirationEntry) {
                             this.trySetExpiration(luxon_1.DateTime.fromJSDate(nextExpirationEntry.nextExpiration));
@@ -361,7 +375,9 @@ var CacheControlBuilder = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
+                    case 0: return [4 /*yield*/, this.db.ensureValid()];
+                    case 1:
+                        _a.sent();
                         promises = [];
                         if (this.private) {
                             if (!this.currentPrincipalId) {
@@ -391,7 +407,7 @@ var CacheControlBuilder = /** @class */ (function () {
                             promises.push(this.db.expirations.put(__assign(__assign({ url: this.url, created: new Date(), nextExpiration: nextExpiration.toJSDate() }, this.absoluteExpiration && { absoluteExpiration: this.absoluteExpiration.toJSDate() }), this.slidingExpiration && { slidingExpiration: this.slidingExpiration.toISO() })));
                         }
                         return [4 /*yield*/, Promise.all(promises)];
-                    case 1:
+                    case 2:
                         _a.sent();
                         if (nextExpiration.isValid) {
                             this.trySetExpiration(nextExpiration);

@@ -7,6 +7,7 @@ export class CacheContext extends Dexie {
     affiliations!: Dexie.Table<AffiliationEntry, string>;
     tags!: Dexie.Table<TagEntry, string>;
     expirations!: Dexie.Table<ExpirationEntry, string>;
+    private isValidated = false;
 
     constructor(options: CacheOptions) {
         super(options.controlCacheName);
@@ -16,6 +17,23 @@ export class CacheContext extends Dexie {
             tags: "key, url, tag",
             expirations: "url, nextExpiration"
         });
+    }
+
+    async ensureValid() {
+        if (this.isValidated) {
+            return;
+        }
+
+        try {
+            for (const table of this.tables) {
+                await table.limit(1).first();
+            }
+        }
+        finally {
+            await this.delete();
+        }
+
+        this.isValidated = true;
     }
 }
 
