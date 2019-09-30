@@ -94,10 +94,10 @@ var CacheControl = /** @class */ (function () {
                                         case 0: return [4 /*yield*/, this.db.affiliations.where("principalId").notEqual(principalId).toArray()];
                                         case 1:
                                             entries = _a.sent();
+                                            urls = entries.map(function (x) { return x.url; });
                                             return [4 /*yield*/, this.db.affiliations.bulkDelete(entries.map(function (x) { return x.url; }))];
                                         case 2:
                                             _a.sent();
-                                            urls = entries.map(function (x) { return x.url; });
                                             return [2 /*return*/];
                                     }
                                 });
@@ -107,9 +107,7 @@ var CacheControl = /** @class */ (function () {
                         return [4 /*yield*/, this.delete(urls)];
                     case 3:
                         _a.sent();
-                        if (urls.length) {
-                            this.logger.debug("Removed " + urls.length + " private entries");
-                        }
+                        this.logger.debug("Removed " + urls.length + " private entries");
                         return [2 /*return*/];
                 }
             });

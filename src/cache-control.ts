@@ -45,15 +45,13 @@ export class CacheControl {
         await this.db.ensureValid();
         await this.db.transaction("rw", this.db.affiliations, async () => {
             const entries = await this.db.affiliations.where(nameof<AffiliationEntry>(x => x.principalId)).notEqual(principalId).toArray();
-            await this.db.affiliations.bulkDelete(entries.map(x => x.url));
             urls = entries.map(x => x.url);
+            await this.db.affiliations.bulkDelete(entries.map(x => x.url));
         });
 
         await this.delete(urls);
 
-        if (urls.length) {
-            this.logger.debug(`Removed ${urls.length} private entries`);
-        }
+        this.logger.debug(`Removed ${urls.length} private entries`);
     }
 
     async clearPrivate() {        
