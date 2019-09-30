@@ -29,7 +29,7 @@ export class CacheContext extends Dexie {
                 await table.limit(1).first();
             }
         }
-        finally {
+        catch {
             await this.delete();
         }
 

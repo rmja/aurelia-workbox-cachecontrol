@@ -73,39 +73,41 @@ var CacheContext = /** @class */ (function (_super) {
     }
     CacheContext.prototype.ensureValid = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _i, _a, table;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var _i, _a, table, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
                         if (this.isValidated) {
                             return [2 /*return*/];
                         }
-                        _b.label = 1;
+                        _c.label = 1;
                     case 1:
-                        _b.trys.push([1, , 6, 8]);
+                        _c.trys.push([1, 6, , 8]);
                         _i = 0, _a = this.tables;
-                        _b.label = 2;
+                        _c.label = 2;
                     case 2:
                         if (!(_i < _a.length)) return [3 /*break*/, 5];
                         table = _a[_i];
                         return [4 /*yield*/, table.limit(1).first()];
                     case 3:
-                        _b.sent();
-                        _b.label = 4;
+                        _c.sent();
+                        _c.label = 4;
                     case 4:
                         _i++;
                         return [3 /*break*/, 2];
                     case 5: return [3 /*break*/, 8];
-                    case 6: return [4 /*yield*/, this.delete()];
+                    case 6:
+                        _b = _c.sent();
+                        return [4 /*yield*/, this.delete()];
                     case 7:
-                        _b.sent();
-                        return [7 /*endfinally*/];
+                        _c.sent();
+                        return [3 /*break*/, 8];
                     case 8:
                         if (!!this.isOpen()) return [3 /*break*/, 10];
                         return [4 /*yield*/, this.open()];
                     case 9:
-                        _b.sent();
-                        _b.label = 10;
+                        _c.sent();
+                        _c.label = 10;
                     case 10:
                         this.isValidated = true;
                         return [2 /*return*/];
