@@ -77,13 +77,14 @@ var CacheControl = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.db.ensureValid()];
-                    case 1:
-                        _a.sent();
+                    case 0:
                         if (!principalId) {
                             throw new Error("No principal id is specified, use clearPrivate() if all private entries should be deleted");
                         }
                         this.currentPrincipalId = principalId;
+                        return [4 /*yield*/, this.db.ensureValid()];
+                    case 1:
+                        _a.sent();
                         return [4 /*yield*/, this.db.transaction("rw", this.db.affiliations, function () { return __awaiter(_this, void 0, void 0, function () {
                                 var entries;
                                 return __generator(this, function (_a) {

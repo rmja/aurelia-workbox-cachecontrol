@@ -35,7 +35,6 @@ export class CacheControl {
     }
 
     async ensurePrincipal(principalId: string) {
-        await this.db.ensureValid();
         if (!principalId) {
             throw new Error("No principal id is specified, use clearPrivate() if all private entries should be deleted");
         }
@@ -43,7 +42,7 @@ export class CacheControl {
         this.currentPrincipalId = principalId;
 
         let urls!: string[];
-
+        await this.db.ensureValid();
         await this.db.transaction("rw", this.db.affiliations, async () => {
             const entries = await this.db.affiliations.where(nameof<AffiliationEntry>(x => x.principalId)).notEqual(principalId).toArray();
             await this.db.affiliations.bulkDelete(entries.map(x => x.url));
@@ -57,11 +56,9 @@ export class CacheControl {
         }
     }
 
-    async clearPrivate() {
-        await this.db.ensureValid();
-        
+    async clearPrivate() {        
         let urls!: string[];
-
+        await this.db.ensureValid();
         await this.db.transaction("rw", this.db.affiliations, async () => {
             const entries = await this.db.affiliations.toArray();
             await this.db.affiliations.bulkDelete(entries.map(x => x.url));
@@ -73,7 +70,6 @@ export class CacheControl {
 
     async bust(tags: string[]) {
         await this.db.ensureValid();
-        
         const tagEntries = await this.db.tags.where(nameof<TagEntry>(x => x.tag)).anyOf(tags).toArray();
         const urls = tagEntries.map(x => x.url);
 
@@ -84,7 +80,6 @@ export class CacheControl {
 
     async refresh(url: string) {
         await this.db.ensureValid();
-        
         await this.db.transaction("rw", this.db.expirations, async () => {
             const expiration = await this.db.expirations.get(url);
 
@@ -95,9 +90,8 @@ export class CacheControl {
         });
     }
 
-    private async deleteExpiredTick() {
+    private async deleteExpiredTick() {        
         await this.db.ensureValid();
-        
         await this.deleteExpired();
 
         const nextExpirationEntry = await this.db.expirations.orderBy(nameof<ExpirationEntry>(x => x.nextExpiration)).first();
