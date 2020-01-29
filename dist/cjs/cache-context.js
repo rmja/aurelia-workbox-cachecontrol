@@ -65,23 +65,16 @@ var CacheContext = /** @class */ (function (_super) {
     __extends(CacheContext, _super);
     function CacheContext(options) {
         var _this = _super.call(this, options.controlCacheName) || this;
-        _this.isValidated = false;
         _this.logger = aurelia_framework_1.LogManager.getLogger("cache-control");
         _this.version(1).stores({
             affiliations: "url, principalId",
             tags: "key, url, tag",
             expirations: "url, nextExpiration"
         });
+        _this.validatingPromise = _this.runValidation();
         return _this;
     }
     CacheContext.prototype.ensureValid = function () {
-        if (this.isValidated) {
-            this.logger.debug("Context is already validated");
-            return Promise.resolve();
-        }
-        if (!this.validatingPromise) {
-            this.validatingPromise = this.runValidation();
-        }
         return this.validatingPromise;
     };
     CacheContext.prototype.runValidation = function () {
@@ -159,7 +152,6 @@ var CacheContext = /** @class */ (function (_super) {
                         throw error_4;
                     case 19:
                         this.logger.info("Context was successfully validated");
-                        this.isValidated = true;
                         return [2 /*return*/];
                 }
             });

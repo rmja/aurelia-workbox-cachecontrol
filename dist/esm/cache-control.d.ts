@@ -9,7 +9,7 @@ export interface ICacheControlBuilder {
 }
 export declare class CacheControl {
     private db;
-    private runtimeCacheName;
+    private runtimeCacheOpenPromise;
     private runtimeCache?;
     private logger;
     currentPrincipalId?: string;

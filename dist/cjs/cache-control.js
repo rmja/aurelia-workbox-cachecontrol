@@ -64,11 +64,11 @@ var CacheControl = /** @class */ (function () {
     function CacheControl(db, options) {
         this.db = db;
         this.nextExpiration = NoExpiration;
-        this.runtimeCacheName = options.runtimeCacheName;
         this.logger = aurelia_framework_1.LogManager.getLogger("cache-control");
         options.ensureValid();
         this.deleteExpiredTick = this.deleteExpiredTick.bind(this);
         this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, 0);
+        this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
     CacheControl.prototype.let = function (urlOrObjectWithUrl) {
         var url = typeof urlOrObjectWithUrl === "string" ? urlOrObjectWithUrl : urlOrObjectWithUrl.url;
@@ -274,32 +274,34 @@ var CacheControl = /** @class */ (function () {
     };
     CacheControl.prototype.delete = function (urls) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, set, keys, _i, keys_1, key;
+            var cache, set, keys, _i, keys_1, key;
             var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         if (!!this.runtimeCache) return [3 /*break*/, 2];
-                        _a = this;
-                        return [4 /*yield*/, caches.open(this.runtimeCacheName)];
+                        return [4 /*yield*/, this.runtimeCacheOpenPromise];
                     case 1:
-                        _a.runtimeCache = _b.sent();
-                        _b.label = 2;
+                        cache = _a.sent();
+                        if (!this.runtimeCache) {
+                            this.runtimeCache = cache;
+                        }
+                        _a.label = 2;
                     case 2:
                         set = new Set(urls);
                         return [4 /*yield*/, this.runtimeCache.keys()];
                     case 3:
-                        keys = _b.sent();
+                        keys = _a.sent();
                         _i = 0, keys_1 = keys;
-                        _b.label = 4;
+                        _a.label = 4;
                     case 4:
                         if (!(_i < keys_1.length)) return [3 /*break*/, 7];
                         key = keys_1[_i];
                         if (!set.has(key.url)) return [3 /*break*/, 6];
                         return [4 /*yield*/, this.runtimeCache.delete(key)];
                     case 5:
-                        _b.sent();
-                        _b.label = 6;
+                        _a.sent();
+                        _a.label = 6;
                     case 6:
                         _i++;
                         return [3 /*break*/, 4];
@@ -321,7 +323,7 @@ var CacheControl = /** @class */ (function () {
                         }); })];
                     case 8:
                         // Delete tags
-                        _b.sent();
+                        _a.sent();
                         return [2 /*return*/];
                 }
             });
