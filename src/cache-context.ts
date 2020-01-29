@@ -8,8 +8,7 @@ export class CacheContext extends Dexie {
     affiliations!: Dexie.Table<AffiliationEntry, string>;
     tags!: Dexie.Table<TagEntry, string>;
     expirations!: Dexie.Table<ExpirationEntry, string>;
-    private isValidated = false;
-    private validatingPromise?: Promise<void>;
+    private validatingPromise: Promise<void>;
     private logger = LogManager.getLogger("cache-control");
 
     constructor(options: CacheOptions) {
@@ -20,18 +19,11 @@ export class CacheContext extends Dexie {
             tags: "key, url, tag",
             expirations: "url, nextExpiration"
         });
+
+        this.validatingPromise = this.runValidation();
     }
 
     ensureValid() {
-        if (this.isValidated) {
-            this.logger.debug("Context is already validated");
-            return Promise.resolve();
-        }
-
-        if (!this.validatingPromise) {
-            this.validatingPromise = this.runValidation();
-        }
-
         return this.validatingPromise;
     }
 
@@ -90,8 +82,6 @@ export class CacheContext extends Dexie {
         }
 
         this.logger.info("Context was successfully validated");
-
-        this.isValidated = true;
     }
 }
 
