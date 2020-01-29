@@ -65,7 +65,8 @@ var CacheControl = /** @class */ (function () {
         this.runtimeCacheName = options.runtimeCacheName;
         this.logger = LogManager.getLogger("cache-control");
         options.ensureValid();
-        this.deleteExpiredTimerHandle = setTimeout(this.deleteExpiredTick.bind(this), 0);
+        this.deleteExpiredTick = this.deleteExpiredTick.bind(this);
+        this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, 0);
     }
     CacheControl.prototype.let = function (urlOrObjectWithUrl) {
         var url = typeof urlOrObjectWithUrl === "string" ? urlOrObjectWithUrl : urlOrObjectWithUrl.url;
@@ -260,12 +261,12 @@ var CacheControl = /** @class */ (function () {
     CacheControl.prototype.trySetExpiration = function (expiration) {
         if (!this.nextExpiration.isValid || expiration < this.nextExpiration) {
             if (this.deleteExpiredTimerHandle) {
-                clearTimeout();
+                clearTimeout(this.deleteExpiredTimerHandle);
             }
             this.nextExpiration = expiration;
             var ttl = this.nextExpiration.diffNow();
             var ttlMs = Math.max(ttl.get("milliseconds"), 0) + 1; // Ensure fired after expiration
-            this.deleteExpiredTimerHandle = setTimeout(this.deleteExpiredTick.bind(this), ttlMs);
+            this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, ttlMs);
             this.logger.info("Next expiration timer will be fired at " + this.nextExpiration.toString(), this.nextExpiration);
         }
     };

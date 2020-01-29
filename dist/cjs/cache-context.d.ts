@@ -5,8 +5,11 @@ export declare class CacheContext extends Dexie {
     tags: Dexie.Table<TagEntry, string>;
     expirations: Dexie.Table<ExpirationEntry, string>;
     private isValidated;
+    private validatingPromise?;
+    private logger;
     constructor(options: CacheOptions);
     ensureValid(): Promise<void>;
+    private runValidation;
 }
 export interface AffiliationEntry {
     url: string;

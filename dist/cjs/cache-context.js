@@ -58,14 +58,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var aurelia_framework_1 = require("aurelia-framework");
 var cache_options_1 = require("./cache-options");
 var dexie_1 = require("dexie");
-var aurelia_framework_1 = require("aurelia-framework");
 var CacheContext = /** @class */ (function (_super) {
     __extends(CacheContext, _super);
     function CacheContext(options) {
         var _this = _super.call(this, options.controlCacheName) || this;
         _this.isValidated = false;
+        _this.logger = aurelia_framework_1.LogManager.getLogger("cache-control");
         _this.version(1).stores({
             affiliations: "url, principalId",
             tags: "key, url, tag",
@@ -74,43 +75,90 @@ var CacheContext = /** @class */ (function (_super) {
         return _this;
     }
     CacheContext.prototype.ensureValid = function () {
+        if (this.isValidated) {
+            this.logger.debug("Context is already validated");
+            return Promise.resolve();
+        }
+        if (!this.validatingPromise) {
+            this.validatingPromise = this.runValidation();
+        }
+        return this.validatingPromise;
+    };
+    CacheContext.prototype.runValidation = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _i, _a, table, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var error_1, deleteContext, _i, _a, table, error_2, error_3, error_4;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        if (this.isValidated) {
-                            return [2 /*return*/];
-                        }
-                        _c.label = 1;
+                        this.logger.debug("Starting context validation");
+                        if (!!this.isOpen()) return [3 /*break*/, 4];
+                        this.logger.debug("Context is not open, opening...");
+                        _b.label = 1;
                     case 1:
-                        _c.trys.push([1, 6, , 8]);
-                        _i = 0, _a = this.tables;
-                        _c.label = 2;
-                    case 2:
-                        if (!(_i < _a.length)) return [3 /*break*/, 5];
-                        table = _a[_i];
-                        return [4 /*yield*/, table.limit(1).first()];
-                    case 3:
-                        _c.sent();
-                        _c.label = 4;
-                    case 4:
-                        _i++;
-                        return [3 /*break*/, 2];
-                    case 5: return [3 /*break*/, 8];
-                    case 6:
-                        _b = _c.sent();
-                        return [4 /*yield*/, this.delete()];
-                    case 7:
-                        _c.sent();
-                        return [3 /*break*/, 8];
-                    case 8:
-                        if (!!this.isOpen()) return [3 /*break*/, 10];
+                        _b.trys.push([1, 3, , 4]);
                         return [4 /*yield*/, this.open()];
-                    case 9:
-                        _c.sent();
-                        _c.label = 10;
+                    case 2:
+                        _b.sent();
+                        this.logger.debug("Context was opened");
+                        return [3 /*break*/, 4];
+                    case 3:
+                        error_1 = _b.sent();
+                        this.logger.error("Failed to open context", error_1);
+                        throw error_1;
+                    case 4:
+                        deleteContext = false;
+                        _b.label = 5;
+                    case 5:
+                        _b.trys.push([5, 10, , 11]);
+                        _i = 0, _a = this.tables;
+                        _b.label = 6;
+                    case 6:
+                        if (!(_i < _a.length)) return [3 /*break*/, 9];
+                        table = _a[_i];
+                        this.logger.debug("Validating table '" + table.name + "'");
+                        return [4 /*yield*/, table.limit(1).toArray()];
+                    case 7:
+                        _b.sent();
+                        _b.label = 8;
+                    case 8:
+                        _i++;
+                        return [3 /*break*/, 6];
+                    case 9: return [3 /*break*/, 11];
                     case 10:
+                        error_2 = _b.sent();
+                        this.logger.warn("Failed to run simple table query", error_2);
+                        deleteContext = true;
+                        return [3 /*break*/, 11];
+                    case 11:
+                        if (!deleteContext) return [3 /*break*/, 15];
+                        this.logger.warn("Deleting context");
+                        _b.label = 12;
+                    case 12:
+                        _b.trys.push([12, 14, , 15]);
+                        return [4 /*yield*/, this.delete()];
+                    case 13:
+                        _b.sent();
+                        return [3 /*break*/, 15];
+                    case 14:
+                        error_3 = _b.sent();
+                        this.logger.error("Failed to delete context", error_3);
+                        throw error_3;
+                    case 15:
+                        if (!!this.isOpen()) return [3 /*break*/, 19];
+                        this.logger.debug("Context is not open after possible delete, opening...");
+                        _b.label = 16;
+                    case 16:
+                        _b.trys.push([16, 18, , 19]);
+                        return [4 /*yield*/, this.open()];
+                    case 17:
+                        _b.sent();
+                        return [3 /*break*/, 19];
+                    case 18:
+                        error_4 = _b.sent();
+                        this.logger.error("Failed to open context", error_4);
+                        throw error_4;
+                    case 19:
+                        this.logger.info("Context was successfully validated");
                         this.isValidated = true;
                         return [2 /*return*/];
                 }
