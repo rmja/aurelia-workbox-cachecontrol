@@ -13,7 +13,7 @@ export interface ICacheControlBuilder {
 
 @autoinject()
 export class CacheControl {
-    private runtimeCacheName: string;
+    private runtimeCacheOpenPromise: Promise<Cache>;
     private runtimeCache?: Cache;
     private logger: Logger;
     public currentPrincipalId?: string;
@@ -21,14 +21,14 @@ export class CacheControl {
     private nextExpiration = NoExpiration;
 
     constructor(private db: CacheContext, options: CacheOptions) {
-        this.runtimeCacheName = options.runtimeCacheName;
         this.logger = LogManager.getLogger("cache-control");
 
         options.ensureValid();
 
         this.deleteExpiredTick = this.deleteExpiredTick.bind(this);
-
         this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, 0);
+
+        this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
 
     let(urlOrObjectWithUrl: string | { url: string }) {
@@ -40,6 +40,8 @@ export class CacheControl {
         if (!principalId) {
             throw new Error("No principal id is specified, use clearPrivate() if all private entries should be deleted");
         }
+
+        this.logger.debug(`Ensuring that private entries in cache belongs to '${principalId}'`)
 
         this.currentPrincipalId = principalId;
 
@@ -58,6 +60,9 @@ export class CacheControl {
 
     async clearPrivate() {
         let urls!: string[];
+
+        this.logger.debug("Deleting all private entries");
+
         await this.db.ensureValid();
         await this.db.transaction("rw", this.db.affiliations, async () => {
             const entries = await this.db.affiliations.toArray();
@@ -136,7 +141,11 @@ export class CacheControl {
 
     private async delete(urls: string[]) {
         if (!this.runtimeCache) {
-            this.runtimeCache = await caches.open(this.runtimeCacheName);
+            const cache = await this.runtimeCacheOpenPromise;
+
+            if (!this.runtimeCache) {
+                this.runtimeCache = cache;
+            }
         }
 
         // Delete cache entries
