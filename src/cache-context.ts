@@ -1,6 +1,7 @@
+import { LogManager, autoinject } from 'aurelia-framework';
+
 import { CacheOptions } from './cache-options';
 import Dexie from "dexie";
-import { autoinject } from 'aurelia-framework';
 
 @autoinject()
 export class CacheContext extends Dexie {
@@ -8,6 +9,8 @@ export class CacheContext extends Dexie {
     tags!: Dexie.Table<TagEntry, string>;
     expirations!: Dexie.Table<ExpirationEntry, string>;
     private isValidated = false;
+    private validatingPromise?: Promise<void>;
+    private logger = LogManager.getLogger("cache-control");
 
     constructor(options: CacheOptions) {
         super(options.controlCacheName);
@@ -19,23 +22,74 @@ export class CacheContext extends Dexie {
         });
     }
 
-    async ensureValid() {
+    ensureValid() {
         if (this.isValidated) {
-            return;
+            this.logger.debug("Context is already validated");
+            return Promise.resolve();
         }
 
-        try {
-            for (const table of this.tables) {
-                await table.limit(1).first();
+        if (!this.validatingPromise) {
+            this.validatingPromise = this.runValidation();
+        }
+
+        return this.validatingPromise;
+    }
+
+    private async runValidation() {
+        this.logger.debug("Starting context validation");
+
+        if (!this.isOpen()) {
+            this.logger.debug("Context is not open, opening...");
+
+            try {
+                await this.open();
+
+                this.logger.debug("Context was opened");
+            }
+            catch (error) {
+                this.logger.error("Failed to open context", error);
+                throw error;
             }
         }
-        catch {
-            await this.delete();
+
+        let deleteContext = false;
+        try {
+            for (const table of this.tables) {
+                this.logger.debug(`Validating table '${table.name}'`);
+                await table.limit(1).toArray();
+            }
+        }
+        catch (error) {
+            this.logger.warn("Failed to run simple table query", error);
+
+            deleteContext = true;
+        }
+
+        if (deleteContext) {
+            this.logger.warn("Deleting context");
+
+            try {
+                await this.delete();
+            }
+            catch (error) {
+                this.logger.error("Failed to delete context", error);
+                throw error;
+            }
         }
 
         if (!this.isOpen()) {
-            await this.open();
+            this.logger.debug("Context is not open after possible delete, opening...");
+
+            try {
+                await this.open();
+            }
+            catch (error) {
+                this.logger.error("Failed to open context", error);
+                throw error;
+            }
         }
+
+        this.logger.info("Context was successfully validated");
 
         this.isValidated = true;
     }
