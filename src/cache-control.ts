@@ -26,7 +26,9 @@ export class CacheControl {
 
         options.ensureValid();
 
-        this.deleteExpiredTimerHandle = setTimeout(this.deleteExpiredTick.bind(this), 0);
+        this.deleteExpiredTick = this.deleteExpiredTick.bind(this);
+
+        this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, 0);
     }
 
     let(urlOrObjectWithUrl: string | { url: string }) {
@@ -54,7 +56,7 @@ export class CacheControl {
         this.logger.debug(`Removed ${urls.length} private entries`);
     }
 
-    async clearPrivate() {        
+    async clearPrivate() {
         let urls!: string[];
         await this.db.ensureValid();
         await this.db.transaction("rw", this.db.affiliations, async () => {
@@ -88,12 +90,12 @@ export class CacheControl {
         });
     }
 
-    private async deleteExpiredTick() {        
+    private async deleteExpiredTick() {
         await this.db.ensureValid();
         await this.deleteExpired();
 
         const nextExpirationEntry = await this.db.expirations.orderBy(nameof<ExpirationEntry>(x => x.nextExpiration)).first();
-        
+
         if (nextExpirationEntry) {
             this.trySetExpiration(DateTime.fromJSDate(nextExpirationEntry.nextExpiration));
         }
@@ -120,13 +122,13 @@ export class CacheControl {
     private trySetExpiration(expiration: DateTime) {
         if (!this.nextExpiration.isValid || expiration < this.nextExpiration) {
             if (this.deleteExpiredTimerHandle) {
-                clearTimeout();
+                clearTimeout(this.deleteExpiredTimerHandle);
             }
 
             this.nextExpiration = expiration;
             const ttl = this.nextExpiration.diffNow();
             const ttlMs = Math.max(ttl.get("milliseconds"), 0) + 1; // Ensure fired after expiration
-            this.deleteExpiredTimerHandle = setTimeout(this.deleteExpiredTick.bind(this), ttlMs);
+            this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, ttlMs);
 
             this.logger.info(`Next expiration timer will be fired at ${this.nextExpiration.toString()}`, this.nextExpiration);
         }
@@ -191,7 +193,7 @@ class CacheControlBuilder implements ICacheControlBuilder {
 
     async commit() {
         await this.db.ensureValid();
-        
+
         const promises: Promise<any>[] = [];
         if (this.private) {
             if (!this.currentPrincipalId) {
