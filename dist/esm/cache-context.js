@@ -177,7 +177,7 @@ export { CacheContext };
 function createCancelTimeout() {
     var cancelOpen;
     var cancelPromise = new Promise(function (_, reject) { return cancelOpen = reject; });
-    var timer = window.setTimeout(function () { return cancelOpen(new Error("Timeout while opening database")); }, 1000);
+    var timer = window.setTimeout(function () { return cancelOpen(new Error("Timeout while accessing database")); }, 1000);
     return [cancelPromise, timer];
 }
 //# sourceMappingURL=cache-context.js.map

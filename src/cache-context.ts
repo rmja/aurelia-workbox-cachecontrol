@@ -103,7 +103,7 @@ export class CacheContext extends Dexie {
 function createCancelTimeout(): [Promise<void>, number] {
     let cancelOpen: (reason: Error) => void;
     const cancelPromise = new Promise<void>((_, reject) => cancelOpen = reject);
-    const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while opening database")), 1000);
+    const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while accessing database")), 1000);
 
     return [cancelPromise, timer];
 }
