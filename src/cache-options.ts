@@ -1,6 +1,8 @@
 export class CacheOptions {
     runtimeCacheName!: string;
     controlCacheName!: string;
+    // DB access timeout in milliseconds
+    dbTimeout = 1000;
 
     setCacheId(cacheId: string) {
         const baseElement = document.querySelector("base") as HTMLBaseElement;

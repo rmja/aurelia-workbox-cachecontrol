@@ -8,6 +8,7 @@ export class CacheContext extends Dexie {
     affiliations!: Dexie.Table<AffiliationEntry, string>;
     tags!: Dexie.Table<TagEntry, string>;
     expirations!: Dexie.Table<ExpirationEntry, string>;
+    private dbTimeout: number;
     private validatingPromise: Promise<void>;
     private logger = LogManager.getLogger("cache-control");
 
@@ -19,6 +20,8 @@ export class CacheContext extends Dexie {
             tags: "key, url, tag",
             expirations: "url, nextExpiration"
         });
+
+        this.dbTimeout = options.dbTimeout;
 
         this.validatingPromise = this.runValidation();
     }
@@ -33,7 +36,7 @@ export class CacheContext extends Dexie {
         if (!this.isOpen()) {
             this.logger.debug("Context is not open, opening...");
 
-            const [cancelPromise, cancelTimer] = createCancelTimeout();
+            const [cancelPromise, cancelTimer] = this.createCancelTimeout();
 
             try {
                 await Promise.race([this.open(), cancelPromise]);
@@ -65,7 +68,7 @@ export class CacheContext extends Dexie {
         if (deleteContext) {
             this.logger.warn("Deleting context");
 
-            const [cancelPromise, cancelTimer] = createCancelTimeout();
+            const [cancelPromise, cancelTimer] = this.createCancelTimeout();
 
             try {
                 await Promise.race([this.delete(), cancelPromise]);
@@ -82,7 +85,7 @@ export class CacheContext extends Dexie {
         if (!this.isOpen()) {
             this.logger.debug("Context is not open after possible delete, opening...");
 
-            const [cancelPromise, cancelTimer] = createCancelTimeout();
+            const [cancelPromise, cancelTimer] = this.createCancelTimeout();
 
             try {
                 await Promise.race([this.open(), cancelPromise]);
@@ -98,14 +101,14 @@ export class CacheContext extends Dexie {
 
         this.logger.info("Context was successfully validated");
     }
-}
 
-function createCancelTimeout(): [Promise<void>, number] {
-    let cancelOpen: (reason: Error) => void;
-    const cancelPromise = new Promise<void>((_, reject) => cancelOpen = reject);
-    const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while accessing database")), 1000);
-
-    return [cancelPromise, timer];
+    private createCancelTimeout(): [Promise<void>, number] {
+        let cancelOpen: (reason: Error) => void;
+        const cancelPromise = new Promise<void>((_, reject) => cancelOpen = reject);
+        const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while accessing database")), this.dbTimeout);
+    
+        return [cancelPromise, timer];
+    }
 }
 
 export interface AffiliationEntry {

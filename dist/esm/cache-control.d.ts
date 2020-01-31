@@ -13,6 +13,7 @@ export declare class CacheControl {
     private runtimeCache?;
     private logger;
     currentPrincipalId?: string;
+    private initializedPromise?;
     private deleteExpiredTimerHandle;
     private nextExpiration;
     constructor(db: CacheContext, options: CacheOptions);

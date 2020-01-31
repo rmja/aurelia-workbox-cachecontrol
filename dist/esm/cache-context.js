@@ -69,6 +69,7 @@ var CacheContext = /** @class */ (function (_super) {
             tags: "key, url, tag",
             expirations: "url, nextExpiration"
         });
+        _this.dbTimeout = options.dbTimeout;
         _this.validatingPromise = _this.runValidation();
         return _this;
     }
@@ -84,7 +85,7 @@ var CacheContext = /** @class */ (function (_super) {
                         this.logger.debug("Starting context validation");
                         if (!!this.isOpen()) return [3 /*break*/, 5];
                         this.logger.debug("Context is not open, opening...");
-                        _a = createCancelTimeout(), cancelPromise = _a[0], cancelTimer = _a[1];
+                        _a = this.createCancelTimeout(), cancelPromise = _a[0], cancelTimer = _a[1];
                         _e.label = 1;
                     case 1:
                         _e.trys.push([1, 3, 4, 5]);
@@ -127,7 +128,7 @@ var CacheContext = /** @class */ (function (_super) {
                     case 12:
                         if (!deleteContext) return [3 /*break*/, 17];
                         this.logger.warn("Deleting context");
-                        _c = createCancelTimeout(), cancelPromise = _c[0], cancelTimer = _c[1];
+                        _c = this.createCancelTimeout(), cancelPromise = _c[0], cancelTimer = _c[1];
                         _e.label = 13;
                     case 13:
                         _e.trys.push([13, 15, 16, 17]);
@@ -145,7 +146,7 @@ var CacheContext = /** @class */ (function (_super) {
                     case 17:
                         if (!!this.isOpen()) return [3 /*break*/, 22];
                         this.logger.debug("Context is not open after possible delete, opening...");
-                        _d = createCancelTimeout(), cancelPromise = _d[0], cancelTimer = _d[1];
+                        _d = this.createCancelTimeout(), cancelPromise = _d[0], cancelTimer = _d[1];
                         _e.label = 18;
                     case 18:
                         _e.trys.push([18, 20, 21, 22]);
@@ -167,6 +168,12 @@ var CacheContext = /** @class */ (function (_super) {
             });
         });
     };
+    CacheContext.prototype.createCancelTimeout = function () {
+        var cancelOpen;
+        var cancelPromise = new Promise(function (_, reject) { return cancelOpen = reject; });
+        var timer = window.setTimeout(function () { return cancelOpen(new Error("Timeout while accessing database")); }, this.dbTimeout);
+        return [cancelPromise, timer];
+    };
     CacheContext = __decorate([
         autoinject(),
         __metadata("design:paramtypes", [CacheOptions])
@@ -174,10 +181,4 @@ var CacheContext = /** @class */ (function (_super) {
     return CacheContext;
 }(Dexie));
 export { CacheContext };
-function createCancelTimeout() {
-    var cancelOpen;
-    var cancelPromise = new Promise(function (_, reject) { return cancelOpen = reject; });
-    var timer = window.setTimeout(function () { return cancelOpen(new Error("Timeout while accessing database")); }, 1000);
-    return [cancelPromise, timer];
-}
 //# sourceMappingURL=cache-context.js.map

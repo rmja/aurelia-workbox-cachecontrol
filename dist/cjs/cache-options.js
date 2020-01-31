@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var CacheOptions = /** @class */ (function () {
     function CacheOptions() {
+        // DB access timeout in milliseconds
+        this.dbTimeout = 1000;
     }
     CacheOptions.prototype.setCacheId = function (cacheId) {
         var baseElement = document.querySelector("base");

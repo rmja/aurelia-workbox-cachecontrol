@@ -17,6 +17,7 @@ export class CacheControl {
     private runtimeCache?: Cache;
     private logger: Logger;
     public currentPrincipalId?: string;
+    private initializedPromise?: Promise<void>;
     private deleteExpiredTimerHandle!: number;
     private nextExpiration = NoExpiration;
 
@@ -26,8 +27,7 @@ export class CacheControl {
         options.ensureValid();
 
         this.deleteExpiredTick = this.deleteExpiredTick.bind(this);
-        this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, 0);
-
+        this.initializedPromise = this.deleteExpiredTick();
         this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
 
@@ -46,7 +46,9 @@ export class CacheControl {
         this.currentPrincipalId = principalId;
 
         let urls!: string[];
-        await this.db.ensureValid();
+        if (this.initializedPromise) {
+            await this.initializedPromise;
+        }
         await this.db.transaction("rw", this.db.affiliations, async () => {
             const entries = await this.db.affiliations.where(nameof<AffiliationEntry>(x => x.principalId)).notEqual(principalId).toArray();
             urls = entries.map(x => x.url);
@@ -63,7 +65,9 @@ export class CacheControl {
 
         this.logger.debug("Deleting all private entries");
 
-        await this.db.ensureValid();
+        if (this.initializedPromise) {
+            await this.initializedPromise;
+        }
         await this.db.transaction("rw", this.db.affiliations, async () => {
             const entries = await this.db.affiliations.toArray();
             await this.db.affiliations.bulkDelete(entries.map(x => x.url));
@@ -74,7 +78,9 @@ export class CacheControl {
     }
 
     async bust(tags: string[]) {
-        await this.db.ensureValid();
+        if (this.initializedPromise) {
+            await this.initializedPromise;
+        }
         const tagEntries = await this.db.tags.where(nameof<TagEntry>(x => x.tag)).anyOf(tags).toArray();
         const urls = tagEntries.map(x => x.url);
 
@@ -84,7 +90,9 @@ export class CacheControl {
     }
 
     async refresh(url: string) {
-        await this.db.ensureValid();
+        if (this.initializedPromise) {
+            await this.initializedPromise;
+        }
         await this.db.transaction("rw", this.db.expirations, async () => {
             const expiration = await this.db.expirations.get(url);
 
@@ -96,6 +104,8 @@ export class CacheControl {
     }
 
     private async deleteExpiredTick() {
+        this.logger.debug("Trying to delete any expired");
+
         await this.db.ensureValid();
         await this.deleteExpired();
 
@@ -107,6 +117,9 @@ export class CacheControl {
         else {
             this.nextExpiration = NoExpiration;
         }
+
+        // This completes the initialization
+        this.initializedPromise = undefined;
     }
 
     private async deleteExpired() {
