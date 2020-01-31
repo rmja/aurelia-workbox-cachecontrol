@@ -3,6 +3,8 @@ import { LogManager, autoinject } from 'aurelia-framework';
 import { CacheOptions } from './cache-options';
 import Dexie from "dexie";
 
+const MAX_OPEN_TRIALS = 5;
+
 @autoinject()
 export class CacheContext extends Dexie {
     affiliations!: Dexie.Table<AffiliationEntry, string>;
@@ -36,19 +38,24 @@ export class CacheContext extends Dexie {
         if (!this.isOpen()) {
             this.logger.debug("Context is not open, opening...");
 
-            const [cancelPromise, cancelTimer] = this.createCancelTimeout();
+            for (let trial = 1; ; trial++) {
+                const [cancelPromise, cancelTimer] = this.createCancelTimeout();
 
-            try {
-                await Promise.race([this.open(), cancelPromise]);
+                try {
+                    await Promise.race([this.open(), cancelPromise]);
 
-                this.logger.debug("Context was opened");
-            }
-            catch (error) {
-                this.logger.error("Failed to open context", error);
-                throw error;
-            }
-            finally {
-                clearTimeout(cancelTimer);
+                    this.logger.debug("Context was opened");
+                    break;
+                }
+                catch (error) {
+                    this.logger.error("Failed to open context", error);
+                    if (trial === MAX_OPEN_TRIALS) {
+                        throw error;
+                    }
+                }
+                finally {
+                    clearTimeout(cancelTimer);
+                }
             }
         }
 
