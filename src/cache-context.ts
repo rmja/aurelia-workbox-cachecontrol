@@ -33,15 +33,10 @@ export class CacheContext extends Dexie {
         if (!this.isOpen()) {
             this.logger.debug("Context is not open, opening...");
 
-            let cancelOpen: (reason: Error) => void;
-            const cancelPromise = new Promise((_, reject) => cancelOpen = reject);
-            const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while opening database")), 1000);
+            const [cancelPromise, cancelTimer] = createCancelTimeout();
 
             try {
-                await Promise.race([
-                    this.open(),
-                    cancelPromise
-                ]);
+                await Promise.race([this.open(), cancelPromise]);
 
                 this.logger.debug("Context was opened");
             }
@@ -50,7 +45,7 @@ export class CacheContext extends Dexie {
                 throw error;
             }
             finally {
-                clearTimeout(timer);
+                clearTimeout(cancelTimer);
             }
         }
 
@@ -70,29 +65,47 @@ export class CacheContext extends Dexie {
         if (deleteContext) {
             this.logger.warn("Deleting context");
 
+            const [cancelPromise, cancelTimer] = createCancelTimeout();
+
             try {
-                await this.delete();
+                await Promise.race([this.delete(), cancelPromise]);
             }
             catch (error) {
                 this.logger.error("Failed to delete context", error);
                 throw error;
+            }
+            finally {
+                clearTimeout(cancelTimer);
             }
         }
 
         if (!this.isOpen()) {
             this.logger.debug("Context is not open after possible delete, opening...");
 
+            const [cancelPromise, cancelTimer] = createCancelTimeout();
+
             try {
-                await this.open();
+                await Promise.race([this.open(), cancelPromise]);
             }
             catch (error) {
                 this.logger.error("Failed to open context", error);
                 throw error;
             }
+            finally {
+                clearTimeout(cancelTimer);
+            }
         }
 
         this.logger.info("Context was successfully validated");
     }
+}
+
+function createCancelTimeout(): [Promise<void>, number] {
+    let cancelOpen: (reason: Error) => void;
+    const cancelPromise = new Promise<void>((_, reject) => cancelOpen = reject);
+    const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while opening database")), 1000);
+
+    return [cancelPromise, timer];
 }
 
 export interface AffiliationEntry {
