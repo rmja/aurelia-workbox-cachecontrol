@@ -73,10 +73,12 @@ var CacheContext = /** @class */ (function (_super) {
             expirations: "url, nextExpiration"
         });
         _this.dbTimeout = options.dbTimeout;
-        _this.validatingPromise = _this.runValidation();
         return _this;
     }
     CacheContext.prototype.ensureValid = function () {
+        if (!this.validatingPromise) {
+            this.validatingPromise = this.runValidation();
+        }
         return this.validatingPromise;
     };
     CacheContext.prototype.runValidation = function () {

@@ -1,6 +1,8 @@
 "use strict";
 /// <reference types="ts-nameof" />
 Object.defineProperty(exports, "__esModule", { value: true });
+var cache_context_1 = require("./cache-context");
+exports.CacheContext = cache_context_1.CacheContext;
 var cache_control_1 = require("./cache-control");
 exports.CacheControl = cache_control_1.CacheControl;
 var cache_options_1 = require("./cache-options");
