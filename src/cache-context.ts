@@ -3,8 +3,6 @@ import { LogManager, autoinject } from 'aurelia-framework';
 import { CacheOptions } from './cache-options';
 import Dexie from "dexie";
 
-const MAX_OPEN_TRIALS = 5;
-
 @autoinject()
 export class CacheContext extends Dexie {
     affiliations!: Dexie.Table<AffiliationEntry, string>;
