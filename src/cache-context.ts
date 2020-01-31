@@ -39,24 +39,18 @@ export class CacheContext extends Dexie {
         if (!this.isOpen()) {
             this.logger.debug("Context is not open, opening...");
 
-            for (let trial = 1; ; trial++) {
-                const [cancelPromise, cancelTimer] = this.createCancelTimeout();
+            const [cancelPromise, cancelTimer] = this.createCancelTimeout();
 
-                try {
-                    await Promise.race([this.open(), cancelPromise]);
-
-                    this.logger.debug("Context was opened");
-                    break;
-                }
-                catch (error) {
-                    this.logger.error("Failed to open context", error);
-                    if (trial === MAX_OPEN_TRIALS) {
-                        throw error;
-                    }
-                }
-                finally {
-                    clearTimeout(cancelTimer);
-                }
+            try {
+                await Promise.race([this.open(), cancelPromise]);
+                this.logger.debug("Context was opened");
+            }
+            catch (error) {
+                this.logger.error("Failed to open context", error);
+                throw error;
+            }
+            finally {
+                clearTimeout(cancelTimer);
             }
         }
 
@@ -66,6 +60,7 @@ export class CacheContext extends Dexie {
                 this.logger.debug(`Validating table '${table.name}'`);
                 await table.limit(1).toArray();
             }
+            this.logger.debug("Tables were validated");
         }
         catch (error) {
             this.logger.warn("Failed to run simple table query", error);
@@ -80,6 +75,7 @@ export class CacheContext extends Dexie {
 
             try {
                 await Promise.race([this.delete(), cancelPromise]);
+                this.logger.debug("Context was deleted");
             }
             catch (error) {
                 this.logger.error("Failed to delete context", error);
@@ -97,6 +93,7 @@ export class CacheContext extends Dexie {
 
             try {
                 await Promise.race([this.open(), cancelPromise]);
+                this.logger.debug("Context was reopened");
             }
             catch (error) {
                 this.logger.error("Failed to open context", error);

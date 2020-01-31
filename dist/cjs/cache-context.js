@@ -83,99 +83,94 @@ var CacheContext = /** @class */ (function (_super) {
     };
     CacheContext.prototype.runValidation = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var trial, _a, cancelPromise, cancelTimer, error_1, deleteContext, _i, _b, table, error_2, _c, cancelPromise, cancelTimer, error_3, _d, cancelPromise, cancelTimer, error_4;
+            var _a, cancelPromise, cancelTimer, error_1, deleteContext, _i, _b, table, error_2, _c, cancelPromise, cancelTimer, error_3, _d, cancelPromise, cancelTimer, error_4;
             return __generator(this, function (_e) {
                 switch (_e.label) {
                     case 0:
                         this.logger.debug("Starting context validation");
-                        if (!!this.isOpen()) return [3 /*break*/, 7];
+                        if (!!this.isOpen()) return [3 /*break*/, 5];
                         this.logger.debug("Context is not open, opening...");
-                        trial = 1;
+                        _a = this.createCancelTimeout(), cancelPromise = _a[0], cancelTimer = _a[1];
                         _e.label = 1;
                     case 1:
-                        _a = this.createCancelTimeout(), cancelPromise = _a[0], cancelTimer = _a[1];
-                        _e.label = 2;
-                    case 2:
-                        _e.trys.push([2, 4, 5, 6]);
+                        _e.trys.push([1, 3, 4, 5]);
                         return [4 /*yield*/, Promise.race([this.open(), cancelPromise])];
-                    case 3:
+                    case 2:
                         _e.sent();
                         this.logger.debug("Context was opened");
-                        return [3 /*break*/, 7];
-                    case 4:
+                        return [3 /*break*/, 5];
+                    case 3:
                         error_1 = _e.sent();
                         this.logger.error("Failed to open context", error_1);
-                        if (trial === MAX_OPEN_TRIALS) {
-                            throw error_1;
-                        }
-                        return [3 /*break*/, 6];
-                    case 5:
+                        throw error_1;
+                    case 4:
                         clearTimeout(cancelTimer);
                         return [7 /*endfinally*/];
-                    case 6:
-                        trial++;
-                        return [3 /*break*/, 1];
-                    case 7:
+                    case 5:
                         deleteContext = false;
-                        _e.label = 8;
-                    case 8:
-                        _e.trys.push([8, 13, , 14]);
+                        _e.label = 6;
+                    case 6:
+                        _e.trys.push([6, 11, , 12]);
                         _i = 0, _b = this.tables;
-                        _e.label = 9;
-                    case 9:
-                        if (!(_i < _b.length)) return [3 /*break*/, 12];
+                        _e.label = 7;
+                    case 7:
+                        if (!(_i < _b.length)) return [3 /*break*/, 10];
                         table = _b[_i];
                         this.logger.debug("Validating table '" + table.name + "'");
                         return [4 /*yield*/, table.limit(1).toArray()];
-                    case 10:
+                    case 8:
                         _e.sent();
-                        _e.label = 11;
-                    case 11:
+                        _e.label = 9;
+                    case 9:
                         _i++;
-                        return [3 /*break*/, 9];
-                    case 12: return [3 /*break*/, 14];
-                    case 13:
+                        return [3 /*break*/, 7];
+                    case 10:
+                        this.logger.debug("Tables were validated");
+                        return [3 /*break*/, 12];
+                    case 11:
                         error_2 = _e.sent();
                         this.logger.warn("Failed to run simple table query", error_2);
                         deleteContext = true;
-                        return [3 /*break*/, 14];
-                    case 14:
-                        if (!deleteContext) return [3 /*break*/, 19];
+                        return [3 /*break*/, 12];
+                    case 12:
+                        if (!deleteContext) return [3 /*break*/, 17];
                         this.logger.warn("Deleting context");
                         _c = this.createCancelTimeout(), cancelPromise = _c[0], cancelTimer = _c[1];
-                        _e.label = 15;
-                    case 15:
-                        _e.trys.push([15, 17, 18, 19]);
+                        _e.label = 13;
+                    case 13:
+                        _e.trys.push([13, 15, 16, 17]);
                         return [4 /*yield*/, Promise.race([this.delete(), cancelPromise])];
-                    case 16:
+                    case 14:
                         _e.sent();
-                        return [3 /*break*/, 19];
-                    case 17:
+                        this.logger.debug("Context was deleted");
+                        return [3 /*break*/, 17];
+                    case 15:
                         error_3 = _e.sent();
                         this.logger.error("Failed to delete context", error_3);
                         throw error_3;
-                    case 18:
+                    case 16:
                         clearTimeout(cancelTimer);
                         return [7 /*endfinally*/];
-                    case 19:
-                        if (!!this.isOpen()) return [3 /*break*/, 24];
+                    case 17:
+                        if (!!this.isOpen()) return [3 /*break*/, 22];
                         this.logger.debug("Context is not open after possible delete, opening...");
                         _d = this.createCancelTimeout(), cancelPromise = _d[0], cancelTimer = _d[1];
-                        _e.label = 20;
-                    case 20:
-                        _e.trys.push([20, 22, 23, 24]);
+                        _e.label = 18;
+                    case 18:
+                        _e.trys.push([18, 20, 21, 22]);
                         return [4 /*yield*/, Promise.race([this.open(), cancelPromise])];
-                    case 21:
+                    case 19:
                         _e.sent();
-                        return [3 /*break*/, 24];
-                    case 22:
+                        this.logger.debug("Context was reopened");
+                        return [3 /*break*/, 22];
+                    case 20:
                         error_4 = _e.sent();
                         this.logger.error("Failed to open context", error_4);
                         throw error_4;
-                    case 23:
+                    case 21:
                         clearTimeout(cancelTimer);
                         return [7 /*endfinally*/];
-                    case 24:
+                    case 22:
                         this.logger.info("Context was successfully validated");
                         return [2 /*return*/];
                 }
