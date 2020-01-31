@@ -13,7 +13,7 @@ export declare class CacheControl {
     private runtimeCache?;
     private logger;
     currentPrincipalId?: string;
-    private initializedPromise;
+    private initializingPromise?;
     private deleteExpiredTimerHandle;
     private nextExpiration;
     constructor(db: CacheContext, options: CacheOptions);
@@ -24,6 +24,7 @@ export declare class CacheControl {
     clearPrivate(): Promise<void>;
     bust(tags: string[]): Promise<void>;
     refresh(url: string): Promise<void>;
+    private ensureInitialized;
     private deleteExpiredTick;
     private deleteExpired;
     private trySetExpiration;

@@ -65,7 +65,6 @@ var CacheControl = /** @class */ (function () {
         this.logger = LogManager.getLogger("cache-control");
         options.ensureValid();
         this.deleteExpiredTick = this.deleteExpiredTick.bind(this);
-        this.initializedPromise = this.deleteExpiredTick();
         this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
     CacheControl.prototype.let = function (urlOrObjectWithUrl) {
@@ -84,7 +83,7 @@ var CacheControl = /** @class */ (function () {
                         }
                         this.logger.debug("Ensuring that private entries in cache belongs to '" + principalId + "'");
                         this.currentPrincipalId = principalId;
-                        return [4 /*yield*/, this.initializedPromise];
+                        return [4 /*yield*/, this.ensureInitialized()];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, this.db.transaction("rw", this.db.affiliations, function () { return __awaiter(_this, void 0, void 0, function () {
@@ -121,7 +120,7 @@ var CacheControl = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         this.logger.debug("Deleting all private entries");
-                        return [4 /*yield*/, this.initializedPromise];
+                        return [4 /*yield*/, this.ensureInitialized()];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, this.db.transaction("rw", this.db.affiliations, function () { return __awaiter(_this, void 0, void 0, function () {
@@ -154,7 +153,7 @@ var CacheControl = /** @class */ (function () {
             var tagEntries, urls;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.initializedPromise];
+                    case 0: return [4 /*yield*/, this.ensureInitialized()];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, this.db.tags.where("tag").anyOf(tags).toArray()];
@@ -175,7 +174,7 @@ var CacheControl = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.initializedPromise];
+                    case 0: return [4 /*yield*/, this.ensureInitialized()];
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, this.db.transaction("rw", this.db.expirations, function () { return __awaiter(_this, void 0, void 0, function () {
@@ -199,6 +198,16 @@ var CacheControl = /** @class */ (function () {
                         _a.sent();
                         return [2 /*return*/];
                 }
+            });
+        });
+    };
+    CacheControl.prototype.ensureInitialized = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                if (!this.initializingPromise) {
+                    this.initializingPromise = this.deleteExpiredTick();
+                }
+                return [2 /*return*/, this.initializingPromise];
             });
         });
     };

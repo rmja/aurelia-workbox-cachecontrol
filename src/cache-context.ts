@@ -11,7 +11,7 @@ export class CacheContext extends Dexie {
     tags!: Dexie.Table<TagEntry, string>;
     expirations!: Dexie.Table<ExpirationEntry, string>;
     private dbTimeout: number;
-    private validatingPromise: Promise<void>;
+    private validatingPromise?: Promise<void>;
     private logger = LogManager.getLogger("cache-control");
 
     constructor(options: CacheOptions) {
@@ -24,11 +24,12 @@ export class CacheContext extends Dexie {
         });
 
         this.dbTimeout = options.dbTimeout;
-
-        this.validatingPromise = this.runValidation();
     }
 
     ensureValid() {
+        if (!this.validatingPromise) {
+            this.validatingPromise = this.runValidation();
+        }
         return this.validatingPromise;
     }
 
