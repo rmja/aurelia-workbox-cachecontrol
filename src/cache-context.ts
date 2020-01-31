@@ -33,14 +33,24 @@ export class CacheContext extends Dexie {
         if (!this.isOpen()) {
             this.logger.debug("Context is not open, opening...");
 
+            let cancelOpen: (reason: Error) => void;
+            const cancelPromise = new Promise((_, reject) => cancelOpen = reject);
+            const timer = window.setTimeout(() => cancelOpen(new Error("Timeout while opening database")), 1000);
+
             try {
-                await this.open();
+                await Promise.race([
+                    this.open(),
+                    cancelPromise
+                ]);
 
                 this.logger.debug("Context was opened");
             }
             catch (error) {
                 this.logger.error("Failed to open context", error);
                 throw error;
+            }
+            finally {
+                clearTimeout(timer);
             }
         }
 

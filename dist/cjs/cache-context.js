@@ -79,78 +79,86 @@ var CacheContext = /** @class */ (function (_super) {
     };
     CacheContext.prototype.runValidation = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var error_1, deleteContext, _i, _a, table, error_2, error_3, error_4;
+            var cancelOpen_1, cancelPromise, timer, error_1, deleteContext, _i, _a, table, error_2, error_3, error_4;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         this.logger.debug("Starting context validation");
-                        if (!!this.isOpen()) return [3 /*break*/, 4];
+                        if (!!this.isOpen()) return [3 /*break*/, 5];
                         this.logger.debug("Context is not open, opening...");
+                        cancelPromise = new Promise(function (_, reject) { return cancelOpen_1 = reject; });
+                        timer = window.setTimeout(function () { return cancelOpen_1(new Error("Timeout while opening database")); }, 1000);
                         _b.label = 1;
                     case 1:
-                        _b.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, this.open()];
+                        _b.trys.push([1, 3, 4, 5]);
+                        return [4 /*yield*/, Promise.race([
+                                this.open(),
+                                cancelPromise
+                            ])];
                     case 2:
                         _b.sent();
                         this.logger.debug("Context was opened");
-                        return [3 /*break*/, 4];
+                        return [3 /*break*/, 5];
                     case 3:
                         error_1 = _b.sent();
                         this.logger.error("Failed to open context", error_1);
                         throw error_1;
                     case 4:
-                        deleteContext = false;
-                        _b.label = 5;
+                        clearTimeout(timer);
+                        return [7 /*endfinally*/];
                     case 5:
-                        _b.trys.push([5, 10, , 11]);
-                        _i = 0, _a = this.tables;
+                        deleteContext = false;
                         _b.label = 6;
                     case 6:
-                        if (!(_i < _a.length)) return [3 /*break*/, 9];
+                        _b.trys.push([6, 11, , 12]);
+                        _i = 0, _a = this.tables;
+                        _b.label = 7;
+                    case 7:
+                        if (!(_i < _a.length)) return [3 /*break*/, 10];
                         table = _a[_i];
                         this.logger.debug("Validating table '" + table.name + "'");
                         return [4 /*yield*/, table.limit(1).toArray()];
-                    case 7:
-                        _b.sent();
-                        _b.label = 8;
                     case 8:
+                        _b.sent();
+                        _b.label = 9;
+                    case 9:
                         _i++;
-                        return [3 /*break*/, 6];
-                    case 9: return [3 /*break*/, 11];
-                    case 10:
+                        return [3 /*break*/, 7];
+                    case 10: return [3 /*break*/, 12];
+                    case 11:
                         error_2 = _b.sent();
                         this.logger.warn("Failed to run simple table query", error_2);
                         deleteContext = true;
-                        return [3 /*break*/, 11];
-                    case 11:
-                        if (!deleteContext) return [3 /*break*/, 15];
-                        this.logger.warn("Deleting context");
-                        _b.label = 12;
+                        return [3 /*break*/, 12];
                     case 12:
-                        _b.trys.push([12, 14, , 15]);
-                        return [4 /*yield*/, this.delete()];
+                        if (!deleteContext) return [3 /*break*/, 16];
+                        this.logger.warn("Deleting context");
+                        _b.label = 13;
                     case 13:
-                        _b.sent();
-                        return [3 /*break*/, 15];
+                        _b.trys.push([13, 15, , 16]);
+                        return [4 /*yield*/, this.delete()];
                     case 14:
+                        _b.sent();
+                        return [3 /*break*/, 16];
+                    case 15:
                         error_3 = _b.sent();
                         this.logger.error("Failed to delete context", error_3);
                         throw error_3;
-                    case 15:
-                        if (!!this.isOpen()) return [3 /*break*/, 19];
-                        this.logger.debug("Context is not open after possible delete, opening...");
-                        _b.label = 16;
                     case 16:
-                        _b.trys.push([16, 18, , 19]);
-                        return [4 /*yield*/, this.open()];
+                        if (!!this.isOpen()) return [3 /*break*/, 20];
+                        this.logger.debug("Context is not open after possible delete, opening...");
+                        _b.label = 17;
                     case 17:
-                        _b.sent();
-                        return [3 /*break*/, 19];
+                        _b.trys.push([17, 19, , 20]);
+                        return [4 /*yield*/, this.open()];
                     case 18:
+                        _b.sent();
+                        return [3 /*break*/, 20];
+                    case 19:
                         error_4 = _b.sent();
                         this.logger.error("Failed to open context", error_4);
                         throw error_4;
-                    case 19:
+                    case 20:
                         this.logger.info("Context was successfully validated");
                         return [2 /*return*/];
                 }
