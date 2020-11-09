@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CacheOptions = void 0;
 var CacheOptions = /** @class */ (function () {
     function CacheOptions() {
         // DB access timeout in milliseconds

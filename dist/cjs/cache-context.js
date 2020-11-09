@@ -58,10 +58,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CacheContext = void 0;
 var aurelia_framework_1 = require("aurelia-framework");
 var cache_options_1 = require("./cache-options");
 var dexie_1 = require("dexie");
-var MAX_OPEN_TRIALS = 5;
 var CacheContext = /** @class */ (function (_super) {
     __extends(CacheContext, _super);
     function CacheContext(options) {

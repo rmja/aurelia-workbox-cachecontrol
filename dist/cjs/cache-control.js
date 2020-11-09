@@ -56,6 +56,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CacheControl = void 0;
 var cache_context_1 = require("./cache-context");
 var luxon_1 = require("luxon");
 var aurelia_framework_1 = require("aurelia-framework");

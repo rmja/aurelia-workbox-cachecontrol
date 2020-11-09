@@ -59,7 +59,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { LogManager, autoinject } from 'aurelia-framework';
 import { CacheOptions } from './cache-options';
 import Dexie from "dexie";
-var MAX_OPEN_TRIALS = 5;
 var CacheContext = /** @class */ (function (_super) {
     __extends(CacheContext, _super);
     function CacheContext(options) {
