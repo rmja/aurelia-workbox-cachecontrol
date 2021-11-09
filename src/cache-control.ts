@@ -30,8 +30,7 @@ export class CacheControl {
         this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
 
-    let(urlOrObjectWithUrl: string | { url: string }) {
-        const url = typeof urlOrObjectWithUrl === "string" ? urlOrObjectWithUrl : urlOrObjectWithUrl.url;
+    let(url: string) {
         return new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId, this.trySetExpiration.bind(this));
     }
 
@@ -72,14 +71,14 @@ export class CacheControl {
         await this.delete(urls);
     }
 
-    async bust(tags: string[]) {
+    async bustTags(...tags: string[]) {
         await this.ensureInitialized();
         const tagEntries = await this.db.tags.where(nameof<TagEntry>(x => x.tag)).anyOf(tags).toArray();
         const urls = tagEntries.map(x => x.url);
 
         await this.delete(urls);
 
-        this.logger.debug(`Busted ${urls.length} urls`, urls);
+        this.logger.debug(`Busted ${urls.length} urls from ${tags.length} tags`, urls, tags);
     }
 
     async refresh(url: string) {

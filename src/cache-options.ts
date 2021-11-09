@@ -16,7 +16,7 @@ export class CacheOptions {
 
     ensureValid() {
         if (!this.runtimeCacheName || !this.controlCacheName) {
-            throw Error("Cache control is not correctly configured.");
+            throw new Error("Cache control is not correctly configured.");
         }
     }
 }
