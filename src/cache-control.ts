@@ -5,12 +5,6 @@ import { LogManager, autoinject } from "aurelia-framework";
 import { CacheOptions } from './cache-options';
 import { Logger } from "aurelia-logging";
 
-export interface ICacheControlBuilder {
-    bePrivate(): ICacheControlBuilder;
-    haveTags(...tags: string[]): ICacheControlBuilder;
-    commit(): Promise<void>;
-}
-
 @autoinject()
 export class CacheControl {
     private runtimeCacheOpenPromise: Promise<Cache>;
@@ -30,7 +24,7 @@ export class CacheControl {
         this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
 
-    let(urlOrResponse: string | { url: string, headers: Headers}) {
+    handle(urlOrResponse: string | { url: string, headers: Headers}) : CacheControlBuilder & Promise<void> {
         const url = typeof urlOrResponse === "string" ? urlOrResponse : urlOrResponse.url;
         const builder = new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId, this.trySetExpiration.bind(this));
 
@@ -38,7 +32,7 @@ export class CacheControl {
             const cacheControlHeader = urlOrResponse.headers.get("Cache-Control");
             if (cacheControlHeader && cacheControlHeader.indexOf("private") >= 0) {
                 // Make sure that the response is stored as private
-                builder.bePrivate();
+                builder.isPrivate();
             }
         }
 
@@ -184,27 +178,31 @@ export class CacheControl {
     }
 }
 
-class CacheControlBuilder implements ICacheControlBuilder {
-    private isPrivate = false;
+class CacheControlBuilder implements Promise<void> {
+    private _isPrivate = false;
     private tags: string[] = [];
     private absoluteExpiration?: DateTime;
     private absoluteExpirationRelativeToNow?: Duration;
     private slidingExpiration?: Duration;
+    private commitPromise?: Promise<void>;
 
     constructor(private url: string, private db: CacheContext, private logger: Logger, private currentPrincipalId: string | undefined, private trySetExpiration: (expiration: DateTime) => void) {
     }
 
-    bePrivate(isPrivate = true) {
-        this.isPrivate = isPrivate;
+    isPrivate(isPrivate = true) {
+        this.ensureNotBuilt();
+        this._isPrivate = isPrivate;
         return this;
     }
 
-    haveTags(...tags: string[]) {
+    hasTags(...tags: string[]) {
+        this.ensureNotBuilt();
         this.tags.push(...tags);
         return this;
     }
 
-    haveAbsoluteExpiration(expires: DateTime | Duration) {
+    hasAbsoluteExpiration(expires: DateTime | Duration) {
+        this.ensureNotBuilt();
         if (DateTime.isDateTime(expires)) {
             this.absoluteExpiration = expires;
         }
@@ -214,15 +212,40 @@ class CacheControlBuilder implements ICacheControlBuilder {
         return this;
     }
 
-    haveSlidingExpiration(expires: Duration) {
+    hasSlidingExpiration(expires: Duration) {
+        this.ensureNotBuilt();
         this.slidingExpiration = expires;
+        return this;
+    }
+    
+    then<TResult1 = void, TResult2 = never>(onfulfilled?: ((value: void) => TResult1 | PromiseLike<TResult1>) | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null): Promise<TResult1 | TResult2> {
+        this.commitPromise ??= this.buildPromise();
+        return this.commitPromise.then(onfulfilled, onrejected);
     }
 
-    async commit() {
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null): Promise<void | TResult> {
+        this.commitPromise ??= this.buildPromise();
+        return this.commitPromise.then(onrejected);
+    }
+
+    finally(onfinally?: (() => void) | null): Promise<void> {
+        this.commitPromise ??= this.buildPromise();
+        return this.commitPromise.finally(onfinally);
+    }
+
+    [Symbol.toStringTag]: string = Promise.resolve()[Symbol.toStringTag];
+
+    private ensureNotBuilt() {
+        if (this.commitPromise) {
+            throw new Error("Builder has already been built");
+        }
+    }
+
+    private async buildPromise() {
         await this.db.ensureValid();
 
         const promises: Promise<any>[] = [];
-        if (this.isPrivate) {
+        if (this._isPrivate) {
             if (!this.currentPrincipalId) {
                 throw new Error("No principal is currently configured. Use ensurePrincipal() before making anything private");
             }
