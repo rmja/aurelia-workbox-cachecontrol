@@ -30,8 +30,19 @@ export class CacheControl {
         this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
 
-    let(url: string) {
-        return new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId, this.trySetExpiration.bind(this));
+    let(urlOrResponse: string | { url: string, headers: Headers}) {
+        const url = typeof urlOrResponse === "string" ? urlOrResponse : urlOrResponse.url;
+        const builder = new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId, this.trySetExpiration.bind(this));
+
+        if (typeof urlOrResponse !== "string") {
+            const cacheControlHeader = urlOrResponse.headers.get("Cache-Control");
+            if (cacheControlHeader && cacheControlHeader.indexOf("private") >= 0) {
+                // Make sure that the response is stored as private
+                builder.bePrivate();
+            }
+        }
+
+        return builder;
     }
 
     async ensurePrincipal(principalId: string) {
@@ -174,7 +185,7 @@ export class CacheControl {
 }
 
 class CacheControlBuilder implements ICacheControlBuilder {
-    private private = false;
+    private isPrivate = false;
     private tags: string[] = [];
     private absoluteExpiration?: DateTime;
     private absoluteExpirationRelativeToNow?: Duration;
@@ -183,8 +194,8 @@ class CacheControlBuilder implements ICacheControlBuilder {
     constructor(private url: string, private db: CacheContext, private logger: Logger, private currentPrincipalId: string | undefined, private trySetExpiration: (expiration: DateTime) => void) {
     }
 
-    bePrivate() {
-        this.private = true;
+    bePrivate(isPrivate = true) {
+        this.isPrivate = isPrivate;
         return this;
     }
 
@@ -211,7 +222,7 @@ class CacheControlBuilder implements ICacheControlBuilder {
         await this.db.ensureValid();
 
         const promises: Promise<any>[] = [];
-        if (this.private) {
+        if (this.isPrivate) {
             if (!this.currentPrincipalId) {
                 throw new Error("No principal is currently configured. Use ensurePrincipal() before making anything private");
             }
