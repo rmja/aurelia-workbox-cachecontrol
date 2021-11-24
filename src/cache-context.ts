@@ -1,7 +1,7 @@
 import { LogManager, autoinject } from 'aurelia-framework';
 
 import { CacheOptions } from './cache-options';
-import Dexie from "dexie";
+import { Dexie } from "dexie";
 
 @autoinject()
 export class CacheContext extends Dexie {
