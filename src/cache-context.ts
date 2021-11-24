@@ -1,13 +1,13 @@
 import { LogManager, autoinject } from 'aurelia-framework';
 
 import { CacheOptions } from './cache-options';
-import { Dexie } from "dexie";
+import { Dexie, Table } from "dexie";
 
 @autoinject()
 export class CacheContext extends Dexie {
-    affiliations!: Dexie.Table<AffiliationEntry, string>;
-    tags!: Dexie.Table<TagEntry, string>;
-    expirations!: Dexie.Table<ExpirationEntry, string>;
+    affiliations!: Table<AffiliationEntry, string>;
+    tags!: Table<TagEntry, string>;
+    expirations!: Table<ExpirationEntry, string>;
     private dbTimeout: number;
     private validatingPromise?: Promise<void>;
     private logger = LogManager.getLogger("cache-control");
