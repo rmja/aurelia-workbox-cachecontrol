@@ -7,15 +7,19 @@ import { Logger } from "aurelia-logging";
 
 @autoinject()
 export class CacheControl {
+    /** @internal */
+    public db: CacheContext;
     private runtimeCacheOpenPromise: Promise<Cache>;
     private runtimeCache?: Cache;
-    private logger: Logger;
+    /** @internal */
+    public logger: Logger;
     public currentPrincipalId?: string;
     private initializingPromise?: Promise<void>;
     private deleteExpiredTimerHandle!: number;
     private nextExpiration = NoExpiration;
 
-    constructor(private db: CacheContext, options: CacheOptions) {
+    constructor(db: CacheContext, options: CacheOptions) {
+        this.db = db;
         this.logger = LogManager.getLogger("cache-control");
 
         options.ensureValid();
@@ -26,7 +30,7 @@ export class CacheControl {
 
     handle(urlOrResponse: string | { url: string, headers: Headers}) : CacheControlBuilder & Promise<void> {
         const url = typeof urlOrResponse === "string" ? urlOrResponse : urlOrResponse.url;
-        const builder = new CacheControlBuilder(url, this.db, this.logger, this.currentPrincipalId, this.trySetExpiration.bind(this));
+        const builder = new CacheControlBuilder(url, this);
 
         if (typeof urlOrResponse !== "string") {
             const cacheControlHeader = urlOrResponse.headers.get("Cache-Control");
@@ -136,7 +140,8 @@ export class CacheControl {
         this.logger.info(`Expired ${expiredUrls.length} urls`);
     }
 
-    private trySetExpiration(expiration: DateTime) {
+    /** @internal */
+    public trySetExpiration(expiration: DateTime) {
         if (!this.nextExpiration.isValid || expiration < this.nextExpiration) {
             if (this.deleteExpiredTimerHandle) {
                 clearTimeout(this.deleteExpiredTimerHandle);
@@ -151,7 +156,8 @@ export class CacheControl {
         }
     }
 
-    private async delete(urls: string[]) {
+    /** @internal */
+    public async delete(urls: string[]) {
         if (!this.runtimeCache) {
             const cache = await this.runtimeCacheOpenPromise;
 
@@ -186,7 +192,7 @@ class CacheControlBuilder implements Promise<void> {
     private slidingExpiration?: Duration;
     private commitPromise?: Promise<void>;
 
-    constructor(private url: string, private db: CacheContext, private logger: Logger, private currentPrincipalId: string | undefined, private trySetExpiration: (expiration: DateTime) => void) {
+    constructor(private url: string, private cacheControl: CacheControl) {
     }
 
     isPrivate(isPrivate = true) {
@@ -242,14 +248,18 @@ class CacheControlBuilder implements Promise<void> {
     }
 
     private async buildPromise() {
-        await this.db.ensureValid();
+        await this.cacheControl.db.ensureValid();
 
         const promises: Promise<any>[] = [];
         if (this._isPrivate) {
-            if (!this.currentPrincipalId) {
-                throw new Error("No principal is currently configured. Use ensurePrincipal() before making anything private");
+            if (!this.cacheControl.currentPrincipalId) {
+                this.cacheControl.logger.warn("No principal is currently configured. Use ensurePrincipal() before making anything private.");
+                // Cleanup any cached entries that may exist as we cannot guarantee that they are for this principal.
+                await this.cacheControl.db.affiliations.delete(this.url);
+                await this.cacheControl.delete([this.url]);
+                return;
             }
-            promises.push(this.db.affiliations.put({ url: this.url, principalId: this.currentPrincipalId}));
+            promises.push(this.cacheControl.db.affiliations.put({ url: this.url, principalId: this.cacheControl.currentPrincipalId}));
         }
 
         const entries = this.tags.map(tag => {
@@ -260,7 +270,7 @@ class CacheControlBuilder implements Promise<void> {
             };
         });
 
-        promises.push(this.db.tags.bulkPut(entries));
+        promises.push(this.cacheControl.db.tags.bulkPut(entries));
 
         let nextExpiration = NoExpiration;
         if (this.absoluteExpiration) {
@@ -274,7 +284,7 @@ class CacheControlBuilder implements Promise<void> {
         }
 
         if (nextExpiration.isValid) {
-            promises.push(this.db.expirations.put({
+            promises.push(this.cacheControl.db.expirations.put({
                 url: this.url,
                 created: new Date(),
                 nextExpiration: nextExpiration.toJSDate(),
@@ -286,11 +296,11 @@ class CacheControlBuilder implements Promise<void> {
         await Promise.all(promises);
 
         if (nextExpiration.isValid) {
-            this.trySetExpiration(nextExpiration);
+            this.cacheControl.trySetExpiration(nextExpiration);
         }
 
         if (this.tags.length) {
-            this.logger.debug(`Tagged ${this.url} with`, this.tags);
+            this.cacheControl.logger.debug(`Tagged ${this.url} with`, this.tags);
         }
     }
 }
