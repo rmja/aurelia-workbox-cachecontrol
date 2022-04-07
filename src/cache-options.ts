@@ -4,9 +4,11 @@ export class CacheOptions {
     // DB access timeout in milliseconds
     dbTimeout = 1000;
 
-    setCacheId(cacheId: string) {
-        const baseElement = document.querySelector("base") as HTMLBaseElement;
-        const baseUrl = baseElement ? baseElement.href : window.location.origin;
+    setCacheId(cacheId: string, baseUrl?: string) {
+        if (!baseUrl) {
+            const baseElement = document?.querySelector("base");
+            baseUrl = baseElement?.href ?? self.location.origin;
+        }
 
         this.runtimeCacheName = `${cacheId}-runtime-${baseUrl}`;
         this.controlCacheName = `${cacheId}-runtime-control-${baseUrl}`;
