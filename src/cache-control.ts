@@ -28,6 +28,12 @@ export class CacheControl {
         this.runtimeCacheOpenPromise = caches.open(options.runtimeCacheName);
     }
 
+    static create(configureAction: (options: CacheOptions) => void) {
+        const options = new CacheOptions();
+        configureAction(options);
+        return new CacheControl(new CacheContext(options), options);
+    }
+
     handle(urlOrResponse: string | { url: string, headers: Headers}) : CacheControlBuilder & Promise<void> {
         const url = typeof urlOrResponse === "string" ? urlOrResponse : urlOrResponse.url;
         const builder = new CacheControlBuilder(url, this);
