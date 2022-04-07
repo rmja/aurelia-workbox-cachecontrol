@@ -6,7 +6,7 @@ export class CacheOptions {
 
     setCacheId(cacheId: string, baseUrl?: string) {
         if (!baseUrl) {
-            const baseElement = document?.querySelector("base");
+            const baseElement = self.document?.querySelector("base");
             baseUrl = baseElement?.href ?? self.location.origin;
         }
 
