@@ -156,7 +156,7 @@ export class CacheControl {
             this.nextExpiration = expiration;
             const ttl = this.nextExpiration.diffNow();
             const ttlMs = Math.max(ttl.get("milliseconds"), 0) + 1; // Ensure fired after expiration
-            this.deleteExpiredTimerHandle = window.setTimeout(this.deleteExpiredTick, ttlMs);
+            this.deleteExpiredTimerHandle = self.setTimeout(this.deleteExpiredTick, ttlMs);
 
             this.logger.info(`Next expiration timer will be fired at ${this.nextExpiration.toString()}`, this.nextExpiration);
         }
