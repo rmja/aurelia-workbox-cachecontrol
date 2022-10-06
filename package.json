@@ -17,10 +17,10 @@
     "clean": "rimraf dist"
   },
   "devDependencies": {
-    "@types/luxon": "^2.0.7",
+    "@types/luxon": "^3.0.1",
     "aurelia-framework": "^1.3.1",
     "dexie": "^3.2.0",
-    "luxon": "^2.1.1",
+    "luxon": "^3.0.4",
     "rimraf": "^3.0.2",
     "ts-nameof": "^5.0.0",
     "ttypescript": "^1.5.12",
@@ -29,6 +29,6 @@
   "peerDependencies": {
     "aurelia-framework": "^1.3.1",
     "dexie": "^3.2.0",
-    "luxon": "^2.1.1"
+    "luxon": "^2.1.1 || ^3.0.0"
   }
 }
