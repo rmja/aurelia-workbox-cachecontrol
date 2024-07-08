@@ -16,7 +16,7 @@ export class CacheControl {
     public currentPrincipalId?: string;
     private initializingPromise?: Promise<void>;
     private deleteExpiredTimerHandle!: number;
-    private nextExpiration = NoExpiration;
+    private nextExpiration: DateTime = NoExpiration;
 
     constructor(db: CacheContext, options: CacheOptions) {
         this.db = db;
@@ -278,7 +278,7 @@ class CacheControlBuilder implements Promise<void> {
 
         promises.push(this.cacheControl.db.tags.bulkPut(entries));
 
-        let nextExpiration = NoExpiration;
+        let nextExpiration: DateTime = NoExpiration;
         if (this.absoluteExpiration) {
             nextExpiration = this.absoluteExpiration;
         }
@@ -295,7 +295,7 @@ class CacheControlBuilder implements Promise<void> {
                 created: new Date(),
                 nextExpiration: nextExpiration.toJSDate(),
                 ... this.absoluteExpiration && { absoluteExpiration: this.absoluteExpiration.toJSDate() },
-                ... this.slidingExpiration && { slidingExpiration: this.slidingExpiration.toISO() },
+                ... this.slidingExpiration && { slidingExpiration: this.slidingExpiration.toISO()! },
             }));
         }
 
