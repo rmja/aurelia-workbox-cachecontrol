@@ -1,5 +1,3 @@
-/// <reference types="ts-nameof" />
-
 import { CacheContext } from './cache-context';
 import { CacheControl } from './cache-control';
 import { CacheOptions } from "./cache-options";

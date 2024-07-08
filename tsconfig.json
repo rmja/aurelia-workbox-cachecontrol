@@ -11,7 +11,6 @@
         "rootDir": "src",
         "outDir": "dist/esm",
         "lib": [ "esnext", "dom" ],
-        "plugins": [{ "transform": "ts-nameof", "type": "raw" }],
         "stripInternal": true,
     }
 }

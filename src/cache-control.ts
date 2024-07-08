@@ -4,6 +4,7 @@ import { LogManager, autoinject } from "aurelia-framework";
 
 import { CacheOptions } from './cache-options';
 import { Logger } from "aurelia-logging";
+import { nameOf } from "./nameof";
 
 @autoinject()
 export class CacheControl {
@@ -61,7 +62,7 @@ export class CacheControl {
         let urls!: string[];
         await this.ensureInitialized();
         await this.db.transaction("rw", this.db.affiliations, async () => {
-            const entries = await this.db.affiliations.where(nameof<AffiliationEntry>(x => x.principalId)).notEqual(principalId).toArray();
+            const entries = await this.db.affiliations.where(nameOf<AffiliationEntry>("principalId")).notEqual(principalId).toArray();
             urls = entries.map(x => x.url);
             await this.db.affiliations.bulkDelete(entries.map(x => x.url));
         });
@@ -88,7 +89,7 @@ export class CacheControl {
 
     async bustTags(...tags: string[]) {
         await this.ensureInitialized();
-        const tagEntries = await this.db.tags.where(nameof<TagEntry>(x => x.tag)).anyOf(tags).toArray();
+        const tagEntries = await this.db.tags.where(nameOf<TagEntry>("tag")).anyOf(tags).toArray();
         const urls = tagEntries.map(x => x.url);
 
         await this.delete(urls);
@@ -121,7 +122,7 @@ export class CacheControl {
         await this.db.ensureValid();
         await this.deleteExpired();
 
-        const nextExpirationEntry = await this.db.expirations.orderBy(nameof<ExpirationEntry>(x => x.nextExpiration)).first();
+        const nextExpirationEntry = await this.db.expirations.orderBy(nameOf<ExpirationEntry>("nextExpiration")).first();
 
         if (nextExpirationEntry) {
             this.trySetExpiration(DateTime.fromJSDate(nextExpirationEntry.nextExpiration));
@@ -136,7 +137,7 @@ export class CacheControl {
         let expiredUrls!: string[];
 
         await this.db.transaction("rw", this.db.expirations, async () => {
-            const expirations = await this.db.expirations.where(nameof<ExpirationEntry>(x => x.nextExpiration)).belowOrEqual(now).toArray();
+            const expirations = await this.db.expirations.where(nameOf<ExpirationEntry>("nextExpiration")).belowOrEqual(now).toArray();
             expiredUrls = expirations.map(x => x.url);
             await this.db.expirations.bulkDelete(expiredUrls);
         });
@@ -184,7 +185,7 @@ export class CacheControl {
 
         // Delete tags
         await this.db.transaction("rw", this.db.tags, async () => {
-            const entries = await this.db.tags.where(nameof<TagEntry>(x => x.url)).anyOf(urls).toArray();
+            const entries = await this.db.tags.where(nameOf<TagEntry>("url")).anyOf(urls).toArray();
             await this.db.tags.bulkDelete(entries.map(x => x.key));
         });
     }
