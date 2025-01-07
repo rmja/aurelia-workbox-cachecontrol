@@ -1,6 +1,6 @@
 {
   "name": "aurelia-workbox-cachecontrol",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "license": "MIT",
   "source": "src/index.ts",
   "main": "dist/index.js",
