@@ -1,16 +1,16 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "module": "esnext",
-        "moduleResolution": "node",
-        "declaration": true,
-        "sourceMap": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "strict": true,
-        "rootDir": "src",
-        "outDir": "dist/esm",
-        "lib": [ "esnext", "dom" ],
-        "stripInternal": true,
-    }
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "declaration": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "lib": ["ES2020", "DOM"],
+    "stripInternal": true
+  }
 }

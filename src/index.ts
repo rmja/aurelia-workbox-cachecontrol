@@ -13,3 +13,9 @@ export function configure(
 
   configureAction(options);
 }
+
+declare module "aurelia-framework" {
+  interface FrameworkConfiguration {
+      plugin(plugin: "aurelia-workbox-cachecontrol", configureAction: (options: CacheOptions) => unknown): FrameworkConfiguration;
+  }
+}
