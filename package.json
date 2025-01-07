@@ -23,7 +23,7 @@
     "dexie": "^4.0.7",
     "luxon": "^3.0.4",
     "prettier": "^3.4.2",
-    "rimraf": "^5.0.8",
+    "rimraf": "^6.0.1",
     "typescript": "^5.5.3"
   },
   "peerDependencies": {
