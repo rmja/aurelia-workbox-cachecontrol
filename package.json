@@ -15,7 +15,7 @@
     "build": "rollup -c",
     "prettier": "prettier --write *.mjs src/**/*.ts",
     "clean": "rimraf dist",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.2",
